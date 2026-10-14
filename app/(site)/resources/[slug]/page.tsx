@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Container, Section, Badge } from "@/components/ui";
+import { Icon } from "@/components/icons";
 import { CTABand } from "@/components/site/CTABand";
+import { Reveal } from "@/components/site/Reveal";
+import { ReadingProgress, CopyLinkButton } from "@/components/site/interactive";
 import { getArticleBySlug, getRelatedArticles } from "@/lib/queries";
 import { formatDate } from "@/lib/utils";
 
@@ -28,19 +31,28 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   if (!article) notFound();
 
   const related = await getRelatedArticles(article.id, article.categoryId, 3);
+  // Real reading time derived from the actual article body (≈200 words/min).
+  const minutes = Math.max(1, Math.round(article.content.trim().split(/\s+/).length / 200));
 
   return (
     <>
+      <ReadingProgress />
       <Section className="bg-navy-950 pb-14 pt-16 text-white">
         <Container>
-          <Link href="/resources" className="text-sm font-semibold text-mist-300 transition-colors hover:text-white">← Resources</Link>
+          <Link href="/resources" className="group inline-flex items-center gap-1.5 text-sm font-semibold text-mist-300 transition-all hover:gap-2.5 hover:text-white">
+            <Icon name="arrow-right" className="h-3.5 w-3.5 rotate-180" /> Resources
+          </Link>
           <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
             {article.category ? <Badge tone="blue">{article.category.name}</Badge> : null}
             {article.publishedAt ? <span className="text-mist-400">{formatDate(article.publishedAt)}</span> : null}
+            <span className="inline-flex items-center gap-1.5 text-mist-400">
+              <Icon name="clock" className="h-3.5 w-3.5" /> {minutes} min read
+            </span>
             {article.authorName ? <span className="text-mist-300">By {article.authorName}</span> : null}
+            <span className="ml-auto"><CopyLinkButton /></span>
           </div>
-          <h1 className="mt-4 max-w-3xl font-display text-4xl font-extrabold leading-tight sm:text-5xl">{article.title}</h1>
-          {article.excerpt ? <p className="mt-4 max-w-2xl text-lg leading-relaxed text-mist-300">{article.excerpt}</p> : null}
+          <h1 className="animate-fade-up mt-4 max-w-3xl font-display text-4xl font-extrabold leading-tight sm:text-5xl" style={{ animationDelay: "80ms" }}>{article.title}</h1>
+          {article.excerpt ? <p className="animate-fade-up mt-4 max-w-2xl text-lg leading-relaxed text-mist-300" style={{ animationDelay: "180ms" }}>{article.excerpt}</p> : null}
         </Container>
       </Section>
 
@@ -78,12 +90,17 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           <Container>
             <h2 className="mb-8 font-display text-2xl font-bold text-navy-900">Keep reading</h2>
             <div className="grid gap-6 md:grid-cols-3">
-              {related.map((r) => (
-                <Link key={r.id} href={`/resources/${r.slug}`} className="group rounded-2xl border border-mist-200 bg-white p-6 shadow-card transition-transform duration-300 hover:-translate-y-1">
-                  <p className="text-xs text-mist-500">{r.publishedAt ? formatDate(r.publishedAt) : ""}</p>
-                  <h3 className="mt-2 font-display text-base font-bold leading-snug text-navy-900 transition-colors group-hover:text-electric-600">{r.title}</h3>
-                  {r.excerpt ? <p className="mt-2 line-clamp-2 text-sm text-mist-600">{r.excerpt}</p> : null}
-                </Link>
+              {related.map((r, i) => (
+                <Reveal key={r.id} delay={i * 80}>
+                  <Link href={`/resources/${r.slug}`} className="card-lift group block h-full rounded-2xl border border-mist-200 bg-white p-6 shadow-card">
+                    <p className="text-xs text-mist-500">{r.publishedAt ? formatDate(r.publishedAt) : ""}</p>
+                    <h3 className="mt-2 font-display text-base font-bold leading-snug text-navy-900 transition-colors group-hover:text-electric-600">{r.title}</h3>
+                    {r.excerpt ? <p className="mt-2 line-clamp-2 text-sm text-mist-600">{r.excerpt}</p> : null}
+                    <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-electric-600 transition-all duration-200 group-hover:gap-2.5">
+                      Read <Icon name="arrow-right" className="h-3.5 w-3.5" />
+                    </span>
+                  </Link>
+                </Reveal>
               ))}
             </div>
           </Container>

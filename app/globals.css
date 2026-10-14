@@ -35,8 +35,34 @@
   --shadow-card-lg: 0 2px 6px rgb(10 22 51 / 0.06), 0 24px 48px -20px rgb(10 22 51 / 0.25);
 
   --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite;
   --animate-fade-up: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-slow-pulse: slow-pulse 5s ease-in-out infinite;
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-gradient-pan: gradient-pan 6s ease-in-out infinite;
+  --animate-pop-in: pop-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-spin-slow: spin 14s linear infinite;
+}
+
+/* extended motion keyframes */
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes bar-fill {
+  from { width: 0%; }
+}
+@keyframes shine-sweep {
+  from { left: -75%; }
+  to { left: 130%; }
 }
 
 @keyframes float {
@@ -123,9 +149,61 @@ body {
 
 .text-gradient {
   background: linear-gradient(100deg, #bcd9ff 0%, #58a0ff 45%, #38bdf8 100%);
+  background-size: 220% auto;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* Shine sweep for primary CTAs (pairs with .btn-shine class) */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 45%;
+  height: 100%;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.btn-shine:hover::after {
+  animation: shine-sweep 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Lift + glow on hover for interactive cards */
+.card-lift {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+}
+.card-lift:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-card-lg), 0 0 0 1px rgb(88 160 255 / 0.35), 0 12px 40px -14px rgb(37 99 235 / 0.35);
+}
+
+/* Infinite content ticker (pause on hover; graphics only) */
+.ticker {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ticker-track {
+  display: inline-flex;
+  animation: var(--animate-marquee);
+  will-change: transform;
+}
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+/* Animated width bars in the hero schematic */
+.bar-fill {
+  animation: bar-fill 1.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 .card-sheen {
