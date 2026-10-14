@@ -1,0 +1,53 @@
+{
+  "name": "fresh-solutions",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fresh Solutions — business website and management platform",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "provision:admin": "tsx scripts/provision-admin.ts",
+    "setup": "tsx scripts/migrate.ts && tsx scripts/seed.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
+    "@electric-sql/pglite": "^0.3.0",
+    "@fontsource-variable/inter": "^5.0.0",
+    "@fontsource-variable/space-grotesk": "^5.0.0",
+    "drizzle-orm": "^0.44.0",
+    "next": "^15.3.0",
+    "nodemailer": "^7.0.0",
+    "pdf-lib": "^1.17.1",
+    "pg": "^8.16.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^7.0.0",
+    "@types/pg": "^8.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "drizzle-kit": "^0.31.0",
+    "postcss": "^8.5.0",
+    "sharp": "^0.34.0",
+    "tailwindcss": "^4.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
