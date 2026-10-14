@@ -20,7 +20,7 @@ export function CTABand({
         <h2 className="font-display text-3xl font-extrabold sm:text-4xl">{headline}</h2>
         <p className="mt-3 text-base leading-relaxed text-mist-300">{sub}</p>
         <div className="mt-7 flex flex-wrap justify-center gap-3">
-          <Link href={ctaHref} className="rounded-xl bg-electric-500 px-7 py-3.5 text-sm font-bold text-white shadow-glow transition-all hover:bg-electric-400">
+          <Link href={ctaHref} className="btn-shine rounded-xl bg-electric-500 px-7 py-3.5 text-sm font-bold text-white shadow-glow transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric-400">
             {ctaLabel}
           </Link>
           <Link href="/contact" className="rounded-xl bg-white/10 px-7 py-3.5 text-sm font-bold text-white ring-1 ring-inset ring-white/20 transition-colors hover:bg-white/20">

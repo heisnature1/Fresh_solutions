@@ -38,7 +38,7 @@ export async function SiteFooter() {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`Fresh Solutions on ${SOCIAL_META[name]?.label ?? name}`}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-mist-300 ring-1 ring-inset ring-white/10 transition-colors hover:bg-electric-600 hover:text-white"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-mist-300 ring-1 ring-inset ring-white/10 transition-all duration-200 hover:-translate-y-1 hover:scale-105 hover:bg-electric-600 hover:text-white"
                   >
                     <Icon name={SOCIAL_META[name]?.icon ?? "external"} className="h-[18px] w-[18px]" />
                   </a>

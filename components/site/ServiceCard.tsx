@@ -6,7 +6,7 @@ import { Card } from "@/components/ui";
 export function ServiceCard({ service, dark }: { service: Service; dark?: boolean }) {
   const href = service.isRepairService ? "/repairs" : `/solutions/${service.slug}`;
   return (
-    <Card hover dark={dark} className="group flex h-full flex-col p-6">
+    <Card hover dark={dark} className="group flex h-full flex-col p-6 card-lift">
       <ServiceIcon icon={service.icon} />
       <h3 className={`mt-4 font-display text-lg font-bold ${dark ? "text-white" : "text-navy-900"}`}>
         {service.shortName}

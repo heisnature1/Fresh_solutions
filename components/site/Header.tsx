@@ -145,7 +145,7 @@ export function SiteHeader() {
           )}
           <Link
             href="/start-a-project"
-            className="ml-3 inline-flex items-center gap-2 rounded-xl bg-electric-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgb(37_99_235/0.8)] transition-all duration-200 hover:bg-electric-500 hover:shadow-glow"
+            className="btn-shine ml-3 inline-flex items-center gap-2 rounded-xl bg-electric-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgb(37_99_235/0.8)] transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric-500 hover:shadow-glow"
           >
             Start a Project
             <Icon name="arrow-right" className="h-4 w-4" />
