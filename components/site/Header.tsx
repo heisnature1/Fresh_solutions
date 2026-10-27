@@ -28,8 +28,9 @@ const NAV: NavItem[] = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({ pricingLabel = "Pricing" }: { pricingLabel?: string }) {
   const pathname = usePathname();
+  const navItems = NAV.map((item) => (item.href === "/pricing" ? { ...item, label: pricingLabel } : item));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
@@ -93,7 +94,7 @@ export function SiteHeader() {
 
         {/* Desktop nav */}
         <nav aria-label="Primary" className="ml-auto hidden items-center gap-0.5 lg:flex">
-          {NAV.map((item) =>
+          {navItems.map((item) =>
             item.dropdown ? (
               <div key={item.href} className="relative" ref={dropdownRef} onMouseEnter={openServices} onMouseLeave={closeServices}>
                 <button
@@ -178,7 +179,7 @@ export function SiteHeader() {
       {mobileOpen ? (
         <nav aria-label="Mobile" className="border-t border-white/10 bg-navy-900 px-5 pb-6 pt-2 lg:hidden">
           <ul className="space-y-0.5">
-            {NAV.map((item) =>
+            {navItems.map((item) =>
               item.dropdown ? (
                 <li key={item.href}>
                   <button

@@ -17,6 +17,8 @@ import {
 } from "@/lib/constants";
 import { getFeaturedProjects, getLatestArticles, getApprovedTestimonials } from "@/lib/queries";
 import { getSettings, whatsappLink } from "@/lib/settings";
+import { getPricingConfig } from "@/lib/pricing-store";
+import { pricingCopy } from "@/lib/pricing-config";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -43,14 +45,16 @@ const REPAIR_HIGHLIGHTS = [
 ];
 
 export default async function HomePage() {
-  const [settings, featured, articles, testimonials] = await Promise.all([
+  const [settings, pricing, featured, articles, testimonials] = await Promise.all([
     getSettings(),
+    getPricingConfig(),
     getFeaturedProjects(3).catch(() => []),
     getLatestArticles(3).catch(() => []),
     getApprovedTestimonials({ limit: 6 }).catch(() => []),
   ]);
   const wa = whatsappLink(settings.contactWhatsapp, "Hello Fresh Solutions — I'd like to make an enquiry.");
   const repairService = getService("appliance-repairs")!;
+  const copy = (key: string) => pricingCopy(pricing, key);
 
   return (
     <>
@@ -67,7 +71,7 @@ export default async function HomePage() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {SERVICES.map((s, i) => (
               <Reveal key={s.slug} delay={(i % 4) * 60}>
-                <ServiceCard service={s} />
+                <ServiceCard service={s} pricing={pricing} />
               </Reveal>
             ))}
           </div>
@@ -78,10 +82,10 @@ export default async function HomePage() {
       <Section className="bg-white py-14 sm:py-16">
         <Container>
           <CTABand
-            headline="Know the price before you call"
-            sub="Every service has a published Ghana-cedi starting price, package limits, optional extras, and payment terms. Build an estimate or choose a package on your own time."
+            headline={copy("pricing.homeCtaTitle")}
+            sub={copy("pricing.homeCtaText")}
             ctaHref="/pricing"
-            ctaLabel="View pricing in GHS"
+            ctaLabel={copy("pricing.homeCtaLabel")}
           />
         </Container>
       </Section>

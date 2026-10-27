@@ -82,7 +82,7 @@ Then log in at `https://your-site/admin`. To reset a lost password later, re-run
 ## 6. Post-deploy hygiene
 
 - **Do not run `npm run db:seed` against production** — the seed contains sample content for local development only.
-- **Review and approve the proposed public rates** in `lib/pricing.ts` before directing customers to `/pricing`. Run `npm run pricing:export` after any change so `PRICING_STANDARD.md` stays in sync.
+- **Review and approve the proposed public rates** in **Admin → Pricing** before directing customers to `/pricing`. The built-in defaults in `lib/pricing.ts` are only a fallback. Download the saved JSON from `/admin/pricing` and run `npm run pricing:export -- --config ./fresh-solutions-pricing.json` if you need to regenerate `PRICING_STANDARD.md` from the live rate card.
 - In **Admin → Website settings**, set the real company name/email/phone/address and — when you have them — paste your reviewed Privacy Policy and Terms of Service text. Until then the legal pages display an honest "template placeholders" notice (no fabricated legal text).
 - Upload the real logo in Settings if you have one; the bundled mark is a clearly-labelled temporary placeholder.
 - Add a custom domain in Vercel → Domains, then update `SITE_URL` to match (affects canonical URLs + sitemap + emails), and set up the SMTP sender domain (SPF/DKIM) so quote/proposal emails don't get spam-flagged.

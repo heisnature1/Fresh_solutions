@@ -3,13 +3,15 @@ import { SERVICES } from "@/lib/constants";
 import { Icon } from "@/components/icons";
 import { Container } from "@/components/ui";
 import { getSettings } from "@/lib/settings";
+import { getPricingConfig } from "@/lib/pricing-store";
+import { pricingCopy } from "@/lib/pricing-config";
 
 /**
  * Homepage hero — dark engineering aesthetic with a restrained animated
  * schematic visual (pure CSS/SVG, honours prefers-reduced-motion).
  */
 export async function Hero() {
-  const settings = await getSettings();
+  const [settings, pricing] = await Promise.all([getSettings(), getPricingConfig()]);
 
   return (
     <section className="relative overflow-hidden bg-navy-900">
@@ -61,7 +63,7 @@ export async function Hero() {
             </Link>
             <Link href="/pricing" className="inline-flex items-center gap-2 font-medium text-mist-400 transition-colors hover:text-white">
               <Icon name="file-text" className="h-4 w-4" />
-              View pricing in GHS
+              {pricingCopy(pricing, "pricing.homeHeroLinkLabel")}
             </Link>
             <Link href="/contact" className="inline-flex items-center gap-2 font-medium text-mist-400 transition-colors hover:text-white">
               <Icon name="mail" className="h-4 w-4" />

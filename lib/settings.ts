@@ -33,6 +33,7 @@ export const SETTING_KEYS = {
   jobCardFooter: "documents.job_card_footer",
   legalPrivacy: "legal.privacy",
   legalTerms: "legal.terms",
+  pricingConfig: "pricing.config",
 } as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];

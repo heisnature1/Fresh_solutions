@@ -6,7 +6,7 @@
 **Effective date:** 27 October 2026  
 **Review cycle:** quarterly  
 **Written-quote validity:** 30 days unless the scope changes  
-**Canonical source:** `lib/pricing.ts`  
+**Editable source:** `/admin/pricing` (falls back to `lib/pricing.ts`)<br>
 **Public page:** `/pricing`
 
 ---
@@ -415,12 +415,12 @@ We check that the selected package fits your requirements, confirm any exclusion
 
 ## 8. Changing a published price
 
-1. Open `lib/pricing.ts` — it is the single source of truth for the public rate card.
-2. Change the relevant `price`, `unit`, `kind`, inclusions, or add-on in `SERVICE_PRICING`.
-3. If commercial terms change, update `PRICING_STANDARD`, `PAYMENT_TERMS`, `PRICING_RULES`, or `PRICING_FAQS` in the same file.
-4. Run `npm run pricing:export` to regenerate this document.
-5. Run `npm test`, `npm run typecheck`, and `npm run build` before deploying.
-6. Update the `effectiveDate` when a new rate card is approved.
+1. Sign in to `/admin/pricing` — this is the live source of truth for the public rate card.
+2. Change the relevant copy, group, service, package, extra, rule, payment term, FAQ, process step, or commercial setting.
+3. Save and review the public `/pricing` page. The checked-in `lib/pricing.ts` is only the fallback used before the first save or if saved settings are invalid.
+4. Optionally download the configuration JSON from `/admin/pricing` and run `npm run pricing:export -- --config ./pricing.json` to regenerate this document.
+5. Run `npm test`, `npm run typecheck`, and `npm run build` before deploying code changes.
+6. Update the effective date when a new rate card is approved.
 
 ## 9. Owner approval checklist
 

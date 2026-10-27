@@ -5,11 +5,15 @@ export function CTABand({
   sub = "Tell us about it — we'll scope it with you and give you an honest quote.",
   ctaHref = "/start-a-project",
   ctaLabel = "Start a Project",
+  secondaryHref = "/contact",
+  secondaryLabel = "Contact us",
 }: {
   headline?: string;
   sub?: string;
   ctaHref?: string;
   ctaLabel?: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
 }) {
   return (
     <div className="relative overflow-hidden rounded-3xl bg-navy-950 px-8 py-14 text-center text-white shadow-card-lg">
@@ -23,9 +27,11 @@ export function CTABand({
           <Link href={ctaHref} className="btn-shine rounded-xl bg-electric-500 px-7 py-3.5 text-sm font-bold text-white shadow-glow transition-all duration-200 hover:-translate-y-0.5 hover:bg-electric-400">
             {ctaLabel}
           </Link>
-          <Link href="/contact" className="rounded-xl bg-white/10 px-7 py-3.5 text-sm font-bold text-white ring-1 ring-inset ring-white/20 transition-colors hover:bg-white/20">
-            Contact us
-          </Link>
+          {secondaryLabel ? (
+            <Link href={secondaryHref} className="rounded-xl bg-white/10 px-7 py-3.5 text-sm font-bold text-white ring-1 ring-inset ring-white/20 transition-colors hover:bg-white/20">
+              {secondaryLabel}
+            </Link>
+          ) : null}
         </div>
       </div>
     </div>
