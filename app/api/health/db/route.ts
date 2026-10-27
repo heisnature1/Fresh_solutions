@@ -12,8 +12,23 @@ export const GET = apiHandler(async () => {
     await db.execute(sql`SELECT 1`);
     return jsonOk({ database: "ok" });
   } catch (error) {
-    const err = error as Error & { cause?: { message?: string } };
-    const detail = [err?.message, err?.cause?.message].filter(Boolean).join(" | ");
+    console.error("[health/db] database check failed:", error);
+    const err = error as Error & {
+      cause?: Error & { code?: string; detail?: string; hint?: string };
+    };
+    const cause = err?.cause;
+    const detail = [
+      err?.name,
+      err?.message,
+      cause?.name && `cause: ${cause.name}`,
+      cause?.message,
+      cause?.code && `code: ${cause.code}`,
+      cause?.detail,
+      cause?.hint,
+      err?.stack?.split("\n").slice(0, 4).join(" | "),
+    ]
+      .filter(Boolean)
+      .join(" | ");
     return jsonError(detail || "Unknown database error", 500);
   }
 });
