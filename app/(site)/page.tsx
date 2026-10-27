@@ -4,6 +4,7 @@ import { Hero } from "@/components/site/Hero";
 import { ServiceCard } from "@/components/site/ServiceCard";
 import { ProjectCard } from "@/components/site/ProjectCard";
 import { Reveal } from "@/components/site/Reveal";
+import { CTABand } from "@/components/site/CTABand";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { Container, Section, SectionHeading, Card, ButtonLink, EmptyState, Badge } from "@/components/ui";
 import { Icon, ServiceIcon } from "@/components/icons";
@@ -70,6 +71,18 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </div>
+        </Container>
+      </Section>
+
+      {/* Transparent pricing CTA */}
+      <Section className="bg-white py-14 sm:py-16">
+        <Container>
+          <CTABand
+            headline="Know the price before you call"
+            sub="Every service has a published Ghana-cedi starting price, package limits, optional extras, and payment terms. Build an estimate or choose a package on your own time."
+            ctaHref="/pricing"
+            ctaLabel="View pricing in GHS"
+          />
         </Container>
       </Section>
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Container, Section, SectionHeading, Card, ButtonLink, PageHero } from "@/components/ui";
 import { Icon, ServiceIcon } from "@/components/icons";
 import { Reveal } from "@/components/site/Reveal";
+import { formatGHS, getServiceStartingPrice } from "@/lib/pricing";
 
 export const metadata: Metadata = {
   title: "Electrical & Electronic Appliance Repairs",
@@ -70,6 +71,8 @@ const STEPS = [
 ];
 
 export default function RepairsPage() {
+  const starting = getServiceStartingPrice("appliance-repairs");
+
   return (
     <>
       <PageHero
@@ -77,9 +80,18 @@ export default function RepairsPage() {
         title="Electrical & electronic appliance repairs, done properly"
         intro="Mobile phones, laptops, kettles, and other appliances — diagnosed honestly, priced transparently, and repaired carefully. We never promise a price or completion date before assessment."
       >
+        {starting ? (
+          <p className="mt-6 text-sm text-mist-300">
+            Diagnosis from <strong className="font-display text-lg text-white">{formatGHS(starting.amount)}</strong>{" "}
+            <span>{starting.unit}</span> · Parts and approved repair labour are quoted separately.
+          </p>
+        ) : null}
         <div className="mt-8 flex flex-wrap gap-3.5">
           <ButtonLink href="/repairs/request" size="lg">
             <Icon name="tool" className="h-5 w-5" /> Request a Repair
+          </ButtonLink>
+          <ButtonLink href="/pricing#appliance-repairs" variant="dark" size="lg">
+            <Icon name="file-text" className="h-5 w-5" /> View repair prices
           </ButtonLink>
           <ButtonLink href="/repairs/track" variant="dark" size="lg">
             Track a repair

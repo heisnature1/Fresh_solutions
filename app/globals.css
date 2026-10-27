@@ -268,6 +268,48 @@ body {
 
 @media print {
   body { background: #fff; }
+
+  /* Public pricing guide: convert dark sections to an ink-friendly print view. */
+  .pricing-print.print-invert .bg-navy-900,
+  .pricing-print.print-invert .bg-navy-950,
+  .pricing-print.print-invert [class*="from-navy-900"] {
+    background: #fff !important;
+    color: #0a1633 !important;
+  }
+  .pricing-print.print-invert .text-white,
+  .pricing-print.print-invert .text-mist-200,
+  .pricing-print.print-invert .text-mist-300,
+  .pricing-print.print-invert .text-mist-400,
+  .pricing-print.print-invert .text-mist-500,
+  .pricing-print.print-invert .text-electric-200,
+  .pricing-print.print-invert .text-electric-300 {
+    color: #33415c !important;
+  }
+  .pricing-print.print-invert [class*="bg-white/"] {
+    background: #f7f9fd !important;
+  }
+  .pricing-print.print-invert [class*="border-white/"] {
+    border-color: #cdd5e4 !important;
+  }
+  .pricing-print.print-invert [class*="ring-white/"] {
+    --tw-ring-color: #cdd5e4 !important;
+  }
+  .pricing-print.print-invert .shadow-card,
+  .pricing-print.print-invert .shadow-card-lg,
+  .pricing-print.print-invert .shadow-glow {
+    box-shadow: none !important;
+  }
+  .pricing-print.print-invert .sticky {
+    position: static !important;
+  }
+  .pricing-print.print-invert article,
+  .pricing-print.print-invert details,
+  .pricing-print.print-invert .print\:break-inside-avoid {
+    break-inside: avoid;
+  }
+  .pricing-print.print-invert details > div {
+    display: block !important;
+  }
 }
 
 @layer components {

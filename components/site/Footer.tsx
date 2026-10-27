@@ -21,7 +21,7 @@ export async function SiteFooter() {
   const socials = Object.entries(settings.social).filter(([, url]) => Boolean(url));
 
   return (
-    <footer className="bg-navy-950 text-mist-300">
+    <footer className="bg-navy-950 text-mist-300 print:hidden">
       <div className="h-1 bg-gradient-to-r from-electric-600 via-electric-400 to-electric-600" aria-hidden />
       <Container className="py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
@@ -69,6 +69,7 @@ export async function SiteFooter() {
             <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-mist-400">Company</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/work" className="transition-colors hover:text-white">Our Work</Link></li>
+              <li><Link href="/pricing" className="font-semibold text-electric-300 transition-colors hover:text-electric-200">Pricing in GHS</Link></li>
               <li><Link href="/repairs" className="transition-colors hover:text-white">Repair Services</Link></li>
               <li><Link href="/resources" className="transition-colors hover:text-white">Resources</Link></li>
               <li><Link href="/careers" className="transition-colors hover:text-white">Careers</Link></li>
