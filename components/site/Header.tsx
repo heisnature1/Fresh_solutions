@@ -7,15 +7,24 @@ import { SERVICES } from "@/lib/constants";
 import { Icon } from "@/components/icons";
 import { classNames } from "@/lib/utils";
 
-const NAV = [
+interface NavItem {
+  href: string;
+  label: string;
+  dropdown?: boolean;
+  /** Hide on the smallest desktop breakpoint so pricing stays visible. */
+  xlOnly?: boolean;
+}
+
+const NAV: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/solutions", label: "Solutions", dropdown: true },
-  { href: "/industries", label: "Industries" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/industries", label: "Industries", xlOnly: true },
   { href: "/work", label: "Our Work" },
   { href: "/repairs", label: "Repairs" },
   { href: "/resources", label: "Resources" },
   { href: "/about", label: "About Us" },
-  { href: "/careers", label: "Careers" },
+  { href: "/careers", label: "Careers", xlOnly: true },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -72,7 +81,7 @@ export function SiteHeader() {
   return (
     <header
       className={classNames(
-        "sticky top-0 z-50 border-b transition-all duration-300",
+        "sticky top-0 z-50 border-b transition-all duration-300 print:hidden",
         scrolled ? "border-white/10 bg-navy-900/90 shadow-[0_10px_40px_-18px_rgb(0_0_0/0.6)] backdrop-blur-xl" : "border-transparent bg-navy-900",
       )}
     >
@@ -93,7 +102,7 @@ export function SiteHeader() {
                   aria-haspopup="true"
                   onClick={() => setServicesOpen((v) => !v)}
                   className={classNames(
-                    "link-underline flex items-center gap-1 rounded-lg px-3 py-2 text-[13.5px] font-medium text-mist-200 transition-colors hover:text-white",
+                    "link-underline flex items-center gap-1 rounded-lg px-2.5 py-2 text-[13.5px] font-medium text-mist-200 transition-colors hover:text-white xl:px-3",
                     pathname.startsWith("/solutions") && "text-white",
                   )}
                 >
@@ -135,8 +144,9 @@ export function SiteHeader() {
                 href={item.href}
                 aria-current={pathname === item.href ? "page" : undefined}
                 className={classNames(
-                  "link-underline rounded-lg px-3 py-2 text-[13.5px] font-medium text-mist-200 transition-colors hover:text-white",
+                  "link-underline rounded-lg px-2.5 py-2 text-[13.5px] font-medium text-mist-200 transition-colors hover:text-white xl:px-3",
                   (item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)) && "text-white",
+                  item.xlOnly && "hidden xl:block",
                 )}
               >
                 {item.label}

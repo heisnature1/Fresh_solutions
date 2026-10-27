@@ -59,6 +59,10 @@ export async function Hero() {
               <Icon name="tool" className="h-4 w-4" />
               Request a Repair
             </Link>
+            <Link href="/pricing" className="inline-flex items-center gap-2 font-medium text-mist-400 transition-colors hover:text-white">
+              <Icon name="file-text" className="h-4 w-4" />
+              View pricing in GHS
+            </Link>
             <Link href="/contact" className="inline-flex items-center gap-2 font-medium text-mist-400 transition-colors hover:text-white">
               <Icon name="mail" className="h-4 w-4" />
               Contact us

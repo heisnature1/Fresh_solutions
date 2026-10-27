@@ -14,15 +14,27 @@ const ACCEPT = ".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx";
 
 export function InquiryForm({
   initialService,
+  initialServices,
   initialKind = "project",
+  initialTitle = "",
+  initialBrief = "",
 }: {
   initialService?: string;
+  initialServices?: string[];
   initialKind?: "project" | "quotation";
+  initialTitle?: string;
+  initialBrief?: string;
 }) {
+  const initialSelectedServices = Array.from(
+    new Set([...(initialServices ?? []), ...(initialService ? [initialService] : [])]),
+  ).filter((slug) => SERVICES.some((service) => service.slug === slug));
   const [step, setStep] = useState(0);
   const [kind, setKind] = useState<"project" | "quotation">(initialKind);
-  const [services, setServices] = useState<string[]>(initialService ? [initialService] : []);
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [services, setServices] = useState<string[]>(initialSelectedServices);
+  const [values, setValues] = useState<Record<string, string>>(() => ({
+    ...(initialTitle ? { title: initialTitle } : {}),
+    ...(initialBrief ? { description: initialBrief } : {}),
+  }));
   const [files, setFiles] = useState<File[]>([]);
   const [state, setState] = useState<SubmitState>({ status: "idle" });
   const [attempted, setAttempted] = useState(false);
@@ -213,6 +225,11 @@ export function InquiryForm({
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="font-display text-xl font-bold text-navy-900">Describe the project</h2>
+            {initialBrief ? (
+              <p className="rounded-xl border border-electric-200 bg-electric-50 px-4 py-3 text-sm leading-relaxed text-electric-800">
+                Your selected packages have been added to the project description below. You can edit or add to it.
+              </p>
+            ) : null}
             <div>
               <Label htmlFor="iq-title" required>Project title</Label>
               <Input id="iq-title" value={values.title ?? ""} onChange={(e) => set("title", e.target.value)} maxLength={300} placeholder="e.g. Online shop for a family business" />

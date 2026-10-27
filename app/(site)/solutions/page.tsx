@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { SERVICES } from "@/lib/constants";
 import { ServiceCard } from "@/components/site/ServiceCard";
-import { PageHero, Container, Section, SectionHeading } from "@/components/ui";
+import { PageHero, Container, Section, SectionHeading, ButtonLink } from "@/components/ui";
+import { Icon } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "Solutions",
@@ -15,8 +16,17 @@ export default function SolutionsPage() {
       <PageHero
         eyebrow="Solutions"
         title="Everything we can help you build, secure, fix, and improve"
-        intro="Eleven service areas, one careful team. Explore what we offer and start a conversation — every engagement begins with understanding your actual problem."
-      />
+        intro="Eleven service areas, one careful team. Compare published Ghana-cedi prices before you get in touch, then choose the service that fits your needs."
+      >
+        <div className="mt-8 flex flex-wrap gap-3.5">
+          <ButtonLink href="/pricing" size="lg">
+            View pricing in GHS <Icon name="arrow-right" className="h-5 w-5" />
+          </ButtonLink>
+          <ButtonLink href="/pricing#estimate" variant="dark" size="lg">
+            Build an estimate
+          </ButtonLink>
+        </div>
+      </PageHero>
       <Section>
         <Container>
           <SectionHeading eyebrow="Service directory" title="Our full range of services" />
