@@ -1,9 +1,11 @@
 /**
- * Fresh Solutions public pricing standard.
+ * Fresh Solutions public pricing defaults.
  *
- * This file is the single source of truth for the public rate card. Edit a
- * price here and it updates the pricing page, service cards, estimate builder,
- * prefilled enquiries, SEO data and the internal pricing document.
+ * This file contains the fallback rate card used when no admin-managed
+ * configuration has been saved yet. The live public site reads its pricing
+ * configuration from the database via `lib/pricing-store.ts`; admins edit it in
+ * `/admin/pricing`. Keep this file valid so the site still works before the
+ * first admin save or if the database is temporarily unavailable.
  *
  * All amounts are whole Ghana cedis (GHS). Third-party costs and applicable
  * taxes are excluded unless a package explicitly says otherwise.
@@ -15,7 +17,18 @@ export const PRICING_CURRENCY = "GHS" as const;
 export const PRICING_CURRENCY_LABEL = "Ghanaian Cedi";
 export const PRICING_SYMBOL = "GH₵";
 
-export const PRICING_STANDARD = {
+export interface PricingStandardSettings {
+  effectiveDate: string;
+  quoteValidityDays: number;
+  reviewCycle: string;
+  includedRevisionRounds: number;
+  standardHourlyRate: number;
+  depositPercent: number;
+  largeProjectThreshold: number;
+  freeIntroCallMinutes: number;
+}
+
+export const PRICING_STANDARD: PricingStandardSettings = {
   effectiveDate: "2026-10-27",
   quoteValidityDays: 30,
   reviewCycle: "quarterly",
@@ -24,19 +37,23 @@ export const PRICING_STANDARD = {
   depositPercent: 50,
   largeProjectThreshold: 20_000,
   freeIntroCallMinutes: 15,
-} as const;
+};
 
-export type PricingGroupId = "digital" | "intelligence" | "operations" | "engineering";
-export type PricingUnit =
-  | "one-time"
-  | "per hour"
-  | "per month"
-  | "per session"
-  | "per participant"
-  | "per device"
-  | "per assessment"
-  | "per visit"
-  | "per day";
+/** Group IDs are strings so admins can add or rename pricing sections. */
+export type PricingGroupId = string;
+/** Units are strings so admins can introduce a new billing unit if needed. */
+export type PricingUnit = string;
+export const PRICING_UNITS = [
+  "one-time",
+  "per hour",
+  "per month",
+  "per session",
+  "per participant",
+  "per device",
+  "per assessment",
+  "per visit",
+  "per day",
+] as const;
 export type PriceKind = "fixed" | "from";
 
 export interface PricingGroup {
@@ -76,6 +93,13 @@ export interface ServicePricing {
   addOns: PricingAddOn[];
   actionHref?: string;
   actionLabel?: string;
+  /** Admin overrides for services not present in the code service directory. */
+  name?: string;
+  shortName?: string;
+  icon?: string;
+  detailsHref?: string;
+  /** Representative package used for "from" badges and at-a-glance cards. */
+  startingPlanId?: string;
 }
 
 export interface PricingRule {
@@ -901,41 +925,46 @@ export const PRICING_FAQS: PricingFaq[] = [
   },
 ];
 
-export const PRICING_PROCESS = [
+export interface PricingProcessStep {
+  title: string;
+  text: string;
+}
+
+export const PRICING_PROCESS: PricingProcessStep[] = [
   { title: "Choose a package", text: "Compare published GHS prices, package limits, and optional extras without waiting for a sales call." },
   { title: "Send the short enquiry", text: "Your chosen package and indicative total are carried into the project form automatically." },
   { title: "Confirm the written quote", text: "We verify scope and send one clear quotation, including taxes, exclusions, and payment milestones." },
   { title: "Approve and begin", text: "After your approval and first payment, we schedule the work and share progress against the agreed scope." },
-] as const;
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-export function formatGHS(amount: number): string {
+export function formatGHS(amount: number, symbol: string = PRICING_SYMBOL): string {
   const rounded = Number.isInteger(amount) ? amount : Math.round(amount * 100) / 100;
-  return `${PRICING_SYMBOL}${new Intl.NumberFormat("en-GH", { maximumFractionDigits: 2 }).format(rounded)}`;
+  return `${symbol}${new Intl.NumberFormat("en-GH", { maximumFractionDigits: 2 }).format(rounded)}`;
 }
 
-export function formatEffectiveDate(): string {
+export function formatEffectiveDate(date: string = PRICING_STANDARD.effectiveDate): string {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
     timeZone: "UTC",
-  }).format(new Date(`${PRICING_STANDARD.effectiveDate}T00:00:00Z`));
+  }).format(new Date(`${date}T00:00:00Z`));
 }
 
-export function planPriceLabel(plan: PricingPlan): string {
-  return `${plan.kind === "from" ? "From " : ""}${formatGHS(plan.price)}`;
+export function planPriceLabel(plan: PricingPlan, symbol: string = PRICING_SYMBOL): string {
+  return `${plan.kind === "from" ? "From " : ""}${formatGHS(plan.price, symbol)}`;
 }
 
 export function planUnitLabel(plan: PricingPlan): string {
   return plan.unit === "one-time" ? "one-time" : plan.unit;
 }
 
-export function addOnPriceLabel(addOn: PricingAddOn): string {
-  return `${formatGHS(addOn.price)} ${addOn.unit === "one-time" ? "" : addOn.unit}`.trim();
+export function addOnPriceLabel(addOn: PricingAddOn, symbol: string = PRICING_SYMBOL): string {
+  return `${formatGHS(addOn.price, symbol)} ${addOn.unit === "one-time" ? "" : addOn.unit}`.trim();
 }
 
 const PRICING_BY_SERVICE = new Map(SERVICE_PRICING.map((entry) => [entry.serviceSlug, entry]));
@@ -943,7 +972,7 @@ export const ALL_PRICING_PLANS: PricingPlan[] = SERVICE_PRICING.flatMap((entry) 
 const PLAN_BY_ID = new Map(ALL_PRICING_PLANS.map((plan) => [plan.id, plan]));
 
 /** The most representative entry-level package shown in service summaries. */
-const STARTING_PLAN_IDS: Record<string, string> = {
+export const STARTING_PLAN_IDS: Record<string, string> = {
   "web-development": "web-launch-page",
   "mobile-app-development": "mobile-prototype",
   "software-development": "software-internal-tool",

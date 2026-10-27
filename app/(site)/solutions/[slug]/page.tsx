@@ -5,11 +5,16 @@ import { getService, SERVICES } from "@/lib/constants";
 import { Container, Section, Card, ButtonLink, PageHero } from "@/components/ui";
 import { Icon, ServiceIcon } from "@/components/icons";
 import { Reveal } from "@/components/site/Reveal";
-import { formatGHS, getServicePricing, getServiceStartingPrice } from "@/lib/pricing";
+import { getPricingConfig } from "@/lib/pricing-store";
+import {
+  formatGHSFrom,
+  getServicePricingAnchorFrom,
+  getServiceStartingPriceFrom,
+  pricingCopy,
+  pricingCopyWith,
+} from "@/lib/pricing-config";
 
-export function generateStaticParams() {
-  return SERVICES.filter((s) => !s.isRepairService).map((s) => ({ slug: s.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -30,24 +35,29 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
   if (service.isRepairService) redirect("/repairs");
 
   const others = SERVICES.filter((s) => s.slug !== service.slug && !s.isRepairService).slice(0, 3);
-  const pricing = getServicePricing(service.slug);
-  const starting = getServiceStartingPrice(service.slug);
+  const config = await getPricingConfig();
+  const starting = getServiceStartingPriceFrom(config, service.slug);
+  const pricingHref = `/pricing${getServicePricingAnchorFrom(config, service.slug)}`;
+  const startingNote = starting
+    ? pricingCopyWith(config, "pricing.serviceStartingNote", {
+        price: formatGHSFrom(config, starting.amount),
+        unit: starting.unit,
+        currency: config.currency,
+      })
+    : "";
 
   return (
     <>
       <PageHero eyebrow="Solutions" title={service.name} intro={service.description}>
         {starting ? (
-          <p className="mt-6 text-sm text-mist-300">
-            Published pricing from <strong className="font-display text-lg text-white">{formatGHS(starting.amount)}</strong>{" "}
-            <span>{starting.unit}</span> · All prices in Ghana cedis.
-          </p>
+          <p className="mt-6 text-sm leading-relaxed text-mist-300">{startingNote}</p>
         ) : null}
         <div className="mt-8 flex flex-wrap gap-3.5">
           <ButtonLink href={`/start-a-project?service=${service.slug}`} size="lg">
             {service.cta} <Icon name="arrow-right" className="h-5 w-5" />
           </ButtonLink>
-          <ButtonLink href={`/pricing#${pricing?.groupId ?? "packages"}`} variant="dark" size="lg">
-            <Icon name="file-text" className="h-5 w-5" /> View GHS pricing
+          <ButtonLink href={pricingHref} variant="dark" size="lg">
+            <Icon name="file-text" className="h-5 w-5" /> {pricingCopy(config, "pricing.servicePricingCta")}
           </ButtonLink>
           <ButtonLink href={`/start-a-project?service=${service.slug}&type=quotation`} variant="dark" size="lg">
             Request a Quotation

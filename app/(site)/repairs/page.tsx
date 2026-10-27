@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Container, Section, SectionHeading, Card, ButtonLink, PageHero } from "@/components/ui";
 import { Icon, ServiceIcon } from "@/components/icons";
 import { Reveal } from "@/components/site/Reveal";
-import { formatGHS, getServiceStartingPrice } from "@/lib/pricing";
+import { getPricingConfig } from "@/lib/pricing-store";
+import { formatGHSFrom, getServiceStartingPriceFrom, pricingCopy, pricingCopyWith } from "@/lib/pricing-config";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Electrical & Electronic Appliance Repairs",
@@ -70,8 +73,15 @@ const STEPS = [
   { title: "Collection & completion", text: "You collect your appliance (or we arrange delivery). Any applicable warranty terms are recorded on the job card." },
 ];
 
-export default function RepairsPage() {
-  const starting = getServiceStartingPrice("appliance-repairs");
+export default async function RepairsPage() {
+  const config = await getPricingConfig();
+  const starting = getServiceStartingPriceFrom(config, "appliance-repairs");
+  const startingNote = starting
+    ? pricingCopyWith(config, "pricing.repairsStartingNote", {
+        price: formatGHSFrom(config, starting.amount),
+        unit: starting.unit,
+      })
+    : "";
 
   return (
     <>
@@ -81,17 +91,14 @@ export default function RepairsPage() {
         intro="Mobile phones, laptops, kettles, and other appliances — diagnosed honestly, priced transparently, and repaired carefully. We never promise a price or completion date before assessment."
       >
         {starting ? (
-          <p className="mt-6 text-sm text-mist-300">
-            Diagnosis from <strong className="font-display text-lg text-white">{formatGHS(starting.amount)}</strong>{" "}
-            <span>{starting.unit}</span> · Parts and approved repair labour are quoted separately.
-          </p>
+          <p className="mt-6 text-sm leading-relaxed text-mist-300">{startingNote}</p>
         ) : null}
         <div className="mt-8 flex flex-wrap gap-3.5">
           <ButtonLink href="/repairs/request" size="lg">
             <Icon name="tool" className="h-5 w-5" /> Request a Repair
           </ButtonLink>
           <ButtonLink href="/pricing#appliance-repairs" variant="dark" size="lg">
-            <Icon name="file-text" className="h-5 w-5" /> View repair prices
+            <Icon name="file-text" className="h-5 w-5" /> {pricingCopy(config, "pricing.repairsPricingCta")}
           </ButtonLink>
           <ButtonLink href="/repairs/track" variant="dark" size="lg">
             Track a repair

@@ -1,29 +1,41 @@
 /**
- * Generate PRICING_STANDARD.md from the canonical rate card in lib/pricing.ts.
- * Run `npm run pricing:export` after changing any published price.
+ * Generate PRICING_STANDARD.md from the built-in rate card or an exported
+ * admin pricing configuration.
+ *
+ * Run `npm run pricing:export` for the built-in defaults, or
+ * `npm run pricing:export -- --config ./pricing.json` for a JSON file exported
+ * from /admin/pricing.
  */
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getService } from "../lib/constants";
+import { planUnitLabel } from "../lib/pricing";
 import {
-  addOnPriceLabel,
-  formatEffectiveDate,
-  formatGHS,
-  getPricingGroupServices,
-  getServiceStartingPrice,
-  PAYMENT_TERMS,
-  planPriceLabel,
-  planUnitLabel,
-  PRICING_CURRENCY,
-  PRICING_CURRENCY_LABEL,
-  PRICING_FAQS,
-  PRICING_GROUPS,
-  PRICING_PROCESS,
-  PRICING_RULES,
-  PRICING_STANDARD,
-  SERVICE_PRICING,
-} from "../lib/pricing";
+  DEFAULT_PRICING_CONFIG,
+  addOnPriceLabelFrom,
+  formatEffectiveDateFrom,
+  formatGHSFrom,
+  getPricingGroupFrom,
+  getPricingGroupServicesFrom,
+  getServiceStartingPriceFrom,
+  normalizePricingConfig,
+  planPriceLabelFrom,
+  serviceDisplayName,
+} from "../lib/pricing-config";
 
+function loadConfig() {
+  const flagIndex = process.argv.indexOf("--config");
+  const configPath = flagIndex >= 0 ? process.argv[flagIndex + 1] : process.env.PRICING_CONFIG_JSON;
+  if (!configPath) return DEFAULT_PRICING_CONFIG;
+  const parsed: unknown = JSON.parse(readFileSync(resolve(process.cwd(), configPath), "utf8"));
+  const raw =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed) && "config" in parsed
+      ? (parsed as { config: unknown }).config
+      : parsed;
+  return normalizePricingConfig(raw);
+}
+
+const config = loadConfig();
 const lines: string[] = [];
 const push = (...items: string[]) => lines.push(...items);
 
@@ -32,11 +44,11 @@ push(
   "",
   "> **Owner review required:** the amounts in this rate card are proposed starting prices prepared for review. Confirm them before treating the public pricing page as final.",
   "",
-  `**Currency:** ${PRICING_CURRENCY_LABEL} (${PRICING_CURRENCY}, GH₵)  `,
-  `**Effective date:** ${formatEffectiveDate()}  `,
-  `**Review cycle:** ${PRICING_STANDARD.reviewCycle}  `,
-  `**Written-quote validity:** ${PRICING_STANDARD.quoteValidityDays} days unless the scope changes  `,
-  "**Canonical source:** `lib/pricing.ts`  ",
+  `**Currency:** ${config.currencyLabel} (${config.currency}, ${config.symbol})  `,
+  `**Effective date:** ${formatEffectiveDateFrom(config)}  `,
+  `**Review cycle:** ${config.standard.reviewCycle}  `,
+  `**Written-quote validity:** ${config.standard.quoteValidityDays} days unless the scope changes  `,
+  "**Editable source:** `/admin/pricing` (falls back to `lib/pricing.ts`)<br>",
   "**Public page:** `/pricing`",
   "",
   "---",
@@ -49,7 +61,7 @@ push(
   "",
 );
 
-for (const rule of PRICING_RULES) {
+for (const rule of config.rules) {
   push(`- **${rule.title}.** ${rule.description}`);
 }
 
@@ -59,7 +71,7 @@ push(
   "",
 );
 
-for (const term of PAYMENT_TERMS) {
+for (const term of config.paymentTerms) {
   push(`- ${term}`);
 }
 
@@ -69,7 +81,7 @@ push(
   "",
 );
 
-PRICING_PROCESS.forEach((step, index) => {
+config.process.forEach((step, index) => {
   push(`${index + 1}. **${step.title}.** ${step.text}`);
 });
 
@@ -81,25 +93,23 @@ push(
   "| --- | --- | ---: | --- |",
 );
 
-for (const entry of SERVICE_PRICING) {
-  const service = getService(entry.serviceSlug);
-  const start = getServiceStartingPrice(entry.serviceSlug);
-  const group = PRICING_GROUPS.find((item) => item.id === entry.groupId);
+for (const entry of config.services) {
+  const start = getServiceStartingPriceFrom(config, entry.serviceSlug);
+  const group = getPricingGroupFrom(config, entry.groupId);
   push(
-    `| ${service?.name ?? entry.serviceSlug} | ${group?.shortLabel ?? entry.groupId} | ${start ? `${start.kind === "from" ? "From " : ""}${formatGHS(start.amount)}` : "—"} | ${start?.unit ?? "—"} |`,
+    `| ${serviceDisplayName(config, entry)} | ${group?.shortLabel ?? entry.groupId} | ${start ? `${start.kind === "from" ? "From " : ""}${formatGHSFrom(config, start.amount)}` : "—"} | ${start?.unit ?? "—"} |`,
   );
 }
 
 push("", "---", "", "## 6. Full package rate card", "");
 
-for (const group of PRICING_GROUPS) {
+for (const group of config.groups) {
   push(`### ${group.label}`, "", group.description, "");
-  for (const entry of getPricingGroupServices(group.id)) {
-    const service = getService(entry.serviceSlug);
-    push(`#### ${service?.name ?? entry.serviceSlug}`, "", entry.intro, "", `**Scope note:** ${entry.note}`, "", "| Package | Published price | Unit | Type | Typical duration | Best for |", "| --- | ---: | --- | --- | --- | --- |");
+  for (const entry of getPricingGroupServicesFrom(config, group.id)) {
+    push(`#### ${serviceDisplayName(config, entry)}`, "", entry.intro, "", `**Scope note:** ${entry.note}`, "", "| Package | Published price | Unit | Type | Typical duration | Best for |", "| --- | ---: | --- | --- | --- | --- |");
     for (const plan of entry.plans) {
       push(
-        `| ${plan.name} | ${planPriceLabel(plan)} | ${planUnitLabel(plan)} | ${plan.kind === "fixed" ? "Fixed" : "Starting price"} | ${plan.duration} | ${plan.bestFor} |`,
+        `| ${plan.name} | ${planPriceLabelFrom(config, plan)} | ${planUnitLabel(plan)} | ${plan.kind === "fixed" ? "Fixed" : "Starting price"} | ${plan.duration} | ${plan.bestFor} |`,
       );
     }
     push("", "**Included in each package:**", "");
@@ -108,7 +118,7 @@ for (const group of PRICING_GROUPS) {
     }
     push("", "**Optional extras:**", "");
     for (const addOn of entry.addOns) {
-      push(`- ${addOn.label}: ${addOnPriceLabel(addOn)}${addOn.note ? ` (${addOn.note})` : ""}.`);
+      push(`- ${addOn.label}: ${addOnPriceLabelFrom(config, addOn)}${addOn.note ? ` (${addOn.note})` : ""}.`);
     }
     push("");
   }
@@ -116,7 +126,7 @@ for (const group of PRICING_GROUPS) {
 
 push("---", "", "## 7. Frequently asked questions", "");
 
-for (const faq of PRICING_FAQS) {
+for (const faq of config.faqs) {
   push(`### ${faq.question}`, "", faq.answer, "");
 }
 
@@ -125,12 +135,12 @@ push(
   "",
   "## 8. Changing a published price",
   "",
-  "1. Open `lib/pricing.ts` — it is the single source of truth for the public rate card.",
-  "2. Change the relevant `price`, `unit`, `kind`, inclusions, or add-on in `SERVICE_PRICING`.",
-  "3. If commercial terms change, update `PRICING_STANDARD`, `PAYMENT_TERMS`, `PRICING_RULES`, or `PRICING_FAQS` in the same file.",
-  "4. Run `npm run pricing:export` to regenerate this document.",
-  "5. Run `npm test`, `npm run typecheck`, and `npm run build` before deploying.",
-  "6. Update the `effectiveDate` when a new rate card is approved.",
+  "1. Sign in to `/admin/pricing` — this is the live source of truth for the public rate card.",
+  "2. Change the relevant copy, group, service, package, extra, rule, payment term, FAQ, process step, or commercial setting.",
+  "3. Save and review the public `/pricing` page. The checked-in `lib/pricing.ts` is only the fallback used before the first save or if saved settings are invalid.",
+  "4. Optionally download the configuration JSON from `/admin/pricing` and run `npm run pricing:export -- --config ./pricing.json` to regenerate this document.",
+  "5. Run `npm test`, `npm run typecheck`, and `npm run build` before deploying code changes.",
+  "6. Update the effective date when a new rate card is approved.",
   "",
   "## 9. Owner approval checklist",
   "",

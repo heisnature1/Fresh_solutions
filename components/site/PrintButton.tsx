@@ -4,7 +4,7 @@ import { Icon } from "@/components/icons";
 import { buttonStyles } from "@/components/ui";
 
 /** Small print/save-as-PDF helper for the public pricing guide. */
-export function PrintButton({ className }: { className?: string }) {
+export function PrintButton({ className, label = "Print price list" }: { className?: string; label?: string }) {
   return (
     <button
       type="button"
@@ -12,7 +12,7 @@ export function PrintButton({ className }: { className?: string }) {
       className={buttonStyles("dark", "md", `print:hidden ${className ?? ""}`)}
     >
       <Icon name="printer" className="h-4 w-4" />
-      Print price list
+      {label}
     </button>
   );
 }

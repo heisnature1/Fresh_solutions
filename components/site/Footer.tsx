@@ -14,7 +14,7 @@ const SOCIAL_META: Record<string, { label: string; icon: string }> = {
   github: { label: "GitHub", icon: "code" },
 };
 
-export async function SiteFooter() {
+export async function SiteFooter({ pricingLabel = "Pricing in GHS" }: { pricingLabel?: string }) {
   const settings = await getSettings();
   const wa = whatsappLink(settings.contactWhatsapp, "Hello Fresh Solutions");
   const year = new Date().getFullYear();
@@ -69,7 +69,7 @@ export async function SiteFooter() {
             <h3 className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-mist-400">Company</h3>
             <ul className="space-y-2 text-sm">
               <li><Link href="/work" className="transition-colors hover:text-white">Our Work</Link></li>
-              <li><Link href="/pricing" className="font-semibold text-electric-300 transition-colors hover:text-electric-200">Pricing in GHS</Link></li>
+              <li><Link href="/pricing" className="font-semibold text-electric-300 transition-colors hover:text-electric-200">{pricingLabel}</Link></li>
               <li><Link href="/repairs" className="transition-colors hover:text-white">Repair Services</Link></li>
               <li><Link href="/resources" className="transition-colors hover:text-white">Resources</Link></li>
               <li><Link href="/careers" className="transition-colors hover:text-white">Careers</Link></li>
