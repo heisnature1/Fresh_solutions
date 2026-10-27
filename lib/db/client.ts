@@ -35,11 +35,15 @@ async function createDb(): Promise<Database> {
   if (url) {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const pg = await import("pg");
+    const ssl =
+      url.includes("localhost") || url.includes("127.0.0.1")
+        ? undefined
+        : url.includes("pooler.supabase.com")
+          ? { rejectUnauthorized: false }
+          : { rejectUnauthorized: true };
     const pool = new pg.default.Pool({
       connectionString: url,
-      ssl: url.includes("localhost") || url.includes("127.0.0.1")
-        ? undefined
-        : { rejectUnauthorized: true },
+      ssl,
       max: 5,
     });
     db = drizzle(pool, { schema }) as unknown as Database;
