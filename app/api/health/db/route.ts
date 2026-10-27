@@ -12,6 +12,8 @@ export const GET = apiHandler(async () => {
     await db.execute(sql`SELECT 1`);
     return jsonOk({ database: "ok" });
   } catch (error) {
-    return jsonError(error instanceof Error ? error.message : "Unknown database error", 500);
+    const err = error as Error & { cause?: { message?: string } };
+    const detail = [err?.message, err?.cause?.message].filter(Boolean).join(" | ");
+    return jsonError(detail || "Unknown database error", 500);
   }
 });
