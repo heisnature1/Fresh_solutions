@@ -61,7 +61,7 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-      <div className="rounded-2xl border border-mist-200 bg-white p-6 shadow-card sm:p-8">
+      <div data-tilt={5} className="tilt-shell rounded-2xl border border-mist-200 bg-white p-6 shadow-card sm:p-8">
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-electric-600/10 text-electric-600">
             <Icon name="layers" className="h-5 w-5" />
@@ -141,6 +141,8 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
 
       <aside
         aria-live="polite"
+        data-reveal
+        data-delay="120ms"
         className="rounded-2xl border border-navy-700 bg-gradient-to-br from-navy-900 to-navy-800 p-6 text-white shadow-card-lg sm:p-8 lg:sticky lg:top-24"
       >
         <div className="flex items-start justify-between gap-4">

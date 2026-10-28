@@ -14,7 +14,14 @@ optional extras, estimate building, commercial terms, and FAQs.
 - `lib/pricing.ts` is the checked-in fallback rate card, used before the first
   admin save and if saved settings are invalid.
 - `lib/pricing-config.ts` validates the full admin-editable configuration;
-  `lib/pricing-store.ts` reads and writes the saved override.
+  `lib/pricing-store.ts` reads and writes the saved override. Invalid package or
+  group IDs and stale `startingPlanId` references are repaired automatically on
+  import, save, and when reading a saved override, so a draft is never lost to a
+  broken ID. The editor also has a one-click **Fix IDs** action.
+- Shared scroll-reveal, pointer-tilt 3D cards, a CSS 3D pricing cube and an
+  animated value strip are provided by `components/site/MotionProvider.tsx`,
+  `Tilt.tsx`, `PricingHeroMotion.tsx` and `PricingMotiveStrip.tsx`. They respect
+  `prefers-reduced-motion` and are hidden or flattened for print.
 - `PRICING_STANDARD.md` is the internal rate-card document generated from the
   built-in defaults. To document a saved configuration, download its JSON from
   `/admin/pricing` and run

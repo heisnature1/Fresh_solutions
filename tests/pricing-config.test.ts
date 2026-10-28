@@ -12,6 +12,8 @@ import {
   pricingCopy,
   pricingCopyWith,
   pricingStructuredData,
+  repairPricingConfig,
+  slugifyPricingId,
   validatePricingConfig,
 } from "../lib/pricing-config";
 
@@ -107,5 +109,50 @@ describe("admin pricing configuration", () => {
     expect(data.itemListElement[0].itemListElement.length).toBeGreaterThan(0);
     expect(data.url).toBe("https://example.com/pricing");
     expect(getPricingPlansFrom(config, ["web-launch-page", "not-real"], 12).map((plan) => plan.id)).toEqual(["web-launch-page"]);
+  });
+
+  it("slugifies free-text IDs", () => {
+    expect(slugifyPricingId("  Mobile Prototype! ")).toBe("mobile-prototype");
+    expect(slugifyPricingId("MVP / Build")).toBe("mvp-build");
+    expect(slugifyPricingId("!!!")).toBe("");
+  });
+
+  it("repairs invalid package IDs and stale starting plan references", () => {
+    const draft = structuredClone(DEFAULT_PRICING_CONFIG);
+    const service = draft.services[1];
+    service.plans[0].id = "Mobile Prototype";
+    service.plans[1].id = "MVP Build!";
+    service.startingPlanId = "Mobile Prototype";
+
+    const result = repairPricingConfig(draft);
+    expect(result.repairs.length).toBeGreaterThan(0);
+    expect(result.config.services[1].plans[0].id).toBe("mobile-prototype");
+    expect(result.config.services[1].plans[1].id).toBe("mvp-build");
+    expect(result.config.services[1].startingPlanId).toBe("mobile-prototype");
+    expect(result.config.services[1].plans.every((plan) => plan.serviceSlug === service.serviceSlug)).toBe(true);
+    expect(validatePricingConfig(result.config).ok).toBe(true);
+  });
+
+  it("normalizes saved configurations instead of discarding repaired IDs", () => {
+    const draft = structuredClone(DEFAULT_PRICING_CONFIG);
+    draft.services[1].plans[0].id = "Mobile Prototype";
+    draft.services[1].startingPlanId = "old-package-id";
+    draft.groups[0].id = "Web & Apps!";
+
+    const config = normalizePricingConfig(draft);
+    expect(validatePricingConfig(config).ok).toBe(true);
+    expect(config.services[1].plans[0].id).toBe("mobile-prototype");
+    expect(config.services[1].startingPlanId).toBe("mobile-prototype");
+    expect(config.groups[0].id).toBe("web-apps");
+  });
+
+  it("makes duplicate repaired package IDs unique", () => {
+    const draft = structuredClone(DEFAULT_PRICING_CONFIG);
+    draft.services[0].plans[0].id = "Same ID";
+    draft.services[1].plans[0].id = "Same ID";
+
+    const result = repairPricingConfig(draft);
+    expect(result.config.services[0].plans[0].id).not.toBe(result.config.services[1].plans[0].id);
+    expect(validatePricingConfig(result.config).ok).toBe(true);
   });
 });

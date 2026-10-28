@@ -3,7 +3,7 @@ import { z } from "zod";
 import { apiHandler, assertSameOrigin, jsonError, jsonOk, parseJson, requireAdmin } from "@/lib/api";
 import { clientIp, recordAudit } from "@/lib/audit";
 import { getPricingConfigRecord, resetPricingConfig, savePricingConfig } from "@/lib/pricing-store";
-import { validatePricingConfig } from "@/lib/pricing-config";
+import { repairPricingConfig, validatePricingConfig } from "@/lib/pricing-config";
 
 const saveSchema = z
   .object({ config: z.unknown() })
@@ -28,9 +28,10 @@ export const POST = apiHandler(async (req: Request) => {
   assertSameOrigin(req);
   const admin = await requireAdmin();
   const { config } = await parseJson(req, saveSchema);
-  const validated = validatePricingConfig(config);
+  const { config: repairedConfig, repairs } = repairPricingConfig(config);
+  const validated = validatePricingConfig(repairedConfig);
   if (!validated.ok) {
-    return jsonError("Please correct the pricing configuration before saving.", 422, { issues: validated.issues });
+    return jsonError("Please correct the pricing configuration before saving.", 422, { issues: validated.issues, repairs });
   }
 
   await savePricingConfig(validated.config);
@@ -42,10 +43,16 @@ export const POST = apiHandler(async (req: Request) => {
     meta: {
       services: validated.config.services.length,
       plans: validated.config.services.reduce((total, entry) => total + entry.plans.length, 0),
+      repairs: repairs.length,
     },
     ip: clientIp(req.headers),
   });
-  return jsonOk({ message: "Pricing saved. The public site now uses these settings." });
+  return jsonOk({
+    message: repairs.length
+      ? `Pricing saved. ${repairs.length} ID/reference issue(s) were repaired automatically.`
+      : "Pricing saved. The public site now uses these settings.",
+    repairs,
+  });
 });
 
 export const DELETE = apiHandler(async (req: Request) => {
