@@ -423,13 +423,19 @@ body {
   animation-duration: 12s;
   animation-direction: reverse;
 }
-.pricing-hero-cube {
+.pricing-hero-cube-wrap {
   position: absolute;
   left: 50%;
   top: 50%;
   width: 112px;
   height: 112px;
   margin: -56px 0 0 -56px;
+  transform-style: preserve-3d;
+}
+.pricing-hero-cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
   transform-style: preserve-3d;
   animation: pricing-cube-spin 22s linear infinite;
 }
@@ -667,4 +673,319 @@ body {
     color: #0a1633 !important;
   }
   .pricing-studio-stat-label { color: #47587a !important; }
+}
+
+/* ---------------------------------------------------------------------------
+   GSAP + modern UI layer
+   --------------------------------------------------------------------------- */
+
+@property --tilt-rx {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --tilt-ry {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@property --tilt-mx {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --tilt-my {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 50%;
+}
+@property --parallax-y {
+  syntax: "<length-percentage>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* Modern text wrapping (progressive enhancement) */
+h1, h2, h3, .font-display {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* GSAP scroll progress */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 100;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, #8ec2ff, #2563eb 55%, #38bdf8);
+  box-shadow: 0 0 14px rgb(49 128 252 / 0.7);
+  will-change: transform;
+}
+@supports (color: color-mix(in oklab, red, blue)) {
+  .scroll-progress {
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-electric-300) 80%, white),
+      var(--color-electric-600) 55%,
+      color-mix(in oklab, var(--color-electric-500) 70%, cyan)
+    );
+  }
+}
+
+/* Word-split headings + staggered children */
+[data-split] {
+  perspective: 800px;
+}
+.split-word {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+.gsap-motion {
+  transition: none !important;
+}
+
+/* Parallax + magnetic affordances */
+[data-parallax] {
+  transform: translate3d(0, var(--parallax-y, 0px), 0);
+  will-change: transform;
+}
+[data-magnetic] {
+  will-change: transform;
+}
+
+/* GSAP-driven tilt overrides the CSS transition but keeps the 3D transform */
+[data-tilt].gsap-tilt {
+  transition: box-shadow 0.22s ease;
+}
+[data-tilt].gsap-tilt.is-tilting {
+  transform: perspective(1100px) rotateX(var(--tilt-rx, 0deg)) rotateY(var(--tilt-ry, 0deg)) translateY(-4px) scale(1.01);
+}
+
+/* Sticky section navigation */
+.section-nav {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.section-nav::-webkit-scrollbar { display: none; }
+.section-nav-link {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 0.65rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #33415c;
+  transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.section-nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.2rem;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-electric-600);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.25s ease;
+}
+.section-nav-link:hover {
+  background: #f0f4fa;
+  color: #0a1633;
+}
+.section-nav-link-primary {
+  font-weight: 700;
+  color: var(--color-electric-700);
+}
+.section-nav-link.section-nav-active {
+  background: #eef6ff;
+  color: var(--color-electric-700);
+  box-shadow: inset 0 0 0 1px rgb(37 99 235 / 0.15);
+}
+.section-nav-link.section-nav-active::after {
+  transform: scaleX(1);
+}
+
+/* Animated public stats bar */
+.pricing-stats-bar {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.15rem;
+  border: 1px solid rgb(142 194 255 / 0.24);
+  background: linear-gradient(120deg, rgb(10 22 51 / 0.96), rgb(16 34 79 / 0.94));
+  padding: 0.25rem;
+  box-shadow: 0 24px 60px -36px rgb(37 99 235 / 0.85);
+  backdrop-filter: blur(12px);
+}
+.pricing-stats-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border-radius: 0.95rem;
+  background: rgb(255 255 255 / 0.08);
+  overflow: hidden;
+}
+@media (min-width: 640px) {
+  .pricing-stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+.pricing-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.85rem 0.5rem;
+  background: rgb(6 13 33 / 0.55);
+  text-align: center;
+}
+.pricing-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: #eaf3ff;
+  font-variant-numeric: tabular-nums;
+}
+.pricing-stat-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #9aa8c4;
+}
+.pricing-stats-glow {
+  position: absolute;
+  inset: -70% 25%;
+  background: radial-gradient(ellipse, rgb(49 128 252 / 0.35), transparent 68%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+@supports (color: color-mix(in oklab, red, blue)) {
+  .pricing-stats-bar {
+    border-color: color-mix(in oklab, var(--color-electric-400) 35%, transparent);
+  }
+}
+
+/* Hero scene dots + GSAP static fallback */
+.pricing-hero-dots,
+.pricing-studio-dots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.pricing-hero-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8ec2ff;
+  box-shadow: 0 0 16px rgb(88 160 255 / 0.9);
+}
+.pricing-hero-dot-a { left: 10%; top: 16%; }
+.pricing-hero-dot-b { right: 14%; top: 10%; width: 5px; height: 5px; }
+.pricing-hero-dot-c { left: 18%; bottom: 12%; width: 4px; height: 4px; opacity: 0.8; }
+
+.pricing-hero-motion.gsap-driven .pricing-hero-cube,
+.pricing-hero-motion.gsap-driven .pricing-hero-orbit,
+.pricing-hero-motion.gsap-driven .pricing-hero-chip {
+  animation: none !important;
+}
+.pricing-hero-motion.is-static .pricing-hero-cube {
+  transform: rotateX(-16deg) rotateY(-28deg);
+}
+.pricing-hero-motion.is-static .pricing-hero-orbit,
+.pricing-hero-motion.is-static .pricing-hero-chip {
+  opacity: 1;
+  transform: none;
+}
+
+/* Admin studio dots + GSAP overrides */
+.pricing-studio-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgb(142 194 255 / 0.8);
+  box-shadow: 0 0 14px rgb(88 160 255 / 0.8);
+}
+.pricing-studio-dot-a { right: 18%; top: 18%; }
+.pricing-studio-dot-b { right: 10%; bottom: 22%; width: 4px; height: 4px; }
+.pricing-studio-dot-c { left: 12%; bottom: 14%; width: 5px; height: 5px; opacity: 0.75; }
+.pricing-studio.gsap-driven .pricing-studio-orb,
+.pricing-studio.gsap-driven .pricing-studio-pulse {
+  animation: none !important;
+}
+.pricing-studio.is-static .pricing-studio-pulse {
+  opacity: 1;
+  transform: none;
+}
+
+/* Reduced-motion + print safeguards for the GSAP layer */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-reveal].gsap-motion,
+  [data-reveal].is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+  .split-word {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  [data-tilt],
+  [data-tilt].is-tilting,
+  [data-magnetic],
+  [data-parallax] {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .pricing-hero-cube,
+  .pricing-hero-orbit,
+  .pricing-hero-chip,
+  .pricing-studio-orb,
+  .pricing-studio-pulse {
+    animation: none !important;
+  }
+}
+
+@media print {
+  .scroll-progress,
+  .pricing-hero-motion,
+  .pricing-studio-dots,
+  .pricing-hero-dots,
+  .pricing-motive,
+  .pricing-stats-bar {
+    display: none !important;
+  }
+  [data-reveal],
+  [data-reveal].gsap-motion,
+  [data-reveal].is-visible,
+  .split-word {
+    opacity: 1 !important;
+    transform: none !important;
+    visibility: visible !important;
+  }
+  [data-tilt],
+  [data-tilt].is-tilting,
+  [data-magnetic],
+  [data-parallax] {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .section-nav {
+    position: static !important;
+  }
 }

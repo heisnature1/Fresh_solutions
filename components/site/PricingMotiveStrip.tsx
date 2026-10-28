@@ -8,8 +8,8 @@ export function PricingMotiveStrip({ items, className }: { items: string[]; clas
   const track = [...labels, ...labels];
 
   return (
-    <div className={classNames("pricing-motive print:hidden", className)} data-reveal>
-      <div className="pricing-motive-glow" aria-hidden />
+    <div className={classNames("pricing-motive print:hidden", className)} data-reveal data-parallax-root>
+      <div className="pricing-motive-glow" data-parallax="0.06" aria-hidden />
       <div className="ticker relative z-10">
         <div className="ticker-track pricing-motive-track">
           {track.map((label, index) => (

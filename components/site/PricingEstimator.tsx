@@ -72,7 +72,7 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
           </div>
         </div>
 
-        <div className="mt-7 grid gap-4 sm:grid-cols-2">
+        <div className="mt-7 grid gap-4 sm:grid-cols-2" data-stagger data-delay="120">
           <div>
             <Label htmlFor="estimate-service">{copy("pricing.estimatorServiceLabel")}</Label>
             <Select id="estimate-service" value={serviceSlug} onChange={(e) => changeService(e.target.value)}>
@@ -129,7 +129,7 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Button type="button" onClick={addPlan} disabled={selectedIds.includes(activePlan.id)}>
+          <Button type="button" onClick={addPlan} disabled={selectedIds.includes(activePlan.id)} data-magnetic>
             <Icon name="plus" className="h-4 w-4" />
             {selectedIds.includes(activePlan.id) ? copy("pricing.estimatorAddedButton") : copy("pricing.estimatorAddButton")}
           </Button>

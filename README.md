@@ -18,10 +18,15 @@ optional extras, estimate building, commercial terms, and FAQs.
   group IDs and stale `startingPlanId` references are repaired automatically on
   import, save, and when reading a saved override, so a draft is never lost to a
   broken ID. The editor also has a one-click **Fix IDs** action.
-- Shared scroll-reveal, pointer-tilt 3D cards, a CSS 3D pricing cube and an
-  animated value strip are provided by `components/site/MotionProvider.tsx`,
-  `Tilt.tsx`, `PricingHeroMotion.tsx` and `PricingMotiveStrip.tsx`. They respect
-  `prefers-reduced-motion` and are hidden or flattened for print.
+- Motion is powered by **GSAP + ScrollTrigger + `@gsap/react`**. The shared
+  `components/site/MotionProvider.tsx` handles scroll reveals, word-split
+  headings, staggered entrances, animated counters, scroll parallax, magnetic
+  buttons, GSAP-driven 3D tilt and a global scroll-progress bar.
+  `components/site/PricingHeroMotion.tsx` runs a bespoke 3D cube timeline and
+  `components/site/SectionNav.tsx` uses ScrollTrigger for active section links.
+  Modern CSS features include typed `@property` custom properties, `color-mix()`,
+  `text-wrap: balance`, and `backdrop-filter`. All of it respects
+  `prefers-reduced-motion` and is hidden or flattened for print.
 - `PRICING_STANDARD.md` is the internal rate-card document generated from the
   built-in defaults. To document a saved configuration, download its JSON from
   `/admin/pricing` and run

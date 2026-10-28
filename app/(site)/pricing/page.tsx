@@ -15,6 +15,8 @@ import { PrintButton } from "@/components/site/PrintButton";
 import { CTABand } from "@/components/site/CTABand";
 import { PricingHeroMotion } from "@/components/site/PricingHeroMotion";
 import { PricingMotiveStrip } from "@/components/site/PricingMotiveStrip";
+import { PricingStatsBar } from "@/components/site/PricingStatsBar";
+import { SectionNav } from "@/components/site/SectionNav";
 import { Tilt } from "@/components/site/Tilt";
 import { planUnitLabel, type PricingPlan, type ServicePricing } from "@/lib/pricing";
 import { getPricingConfig } from "@/lib/pricing-store";
@@ -83,6 +85,13 @@ export default async function PricingPage() {
     `${config.symbol} ${config.currency}`,
     copy("pricing.badgeWrittenQuote"),
   ];
+  const sectionNavItems = [
+    { href: "#estimate", label: copy("pricing.navQuickEstimate"), primary: true },
+    { href: "#packages", label: copy("pricing.navAllPackages") },
+    ...config.groups.map((group) => ({ href: `#${group.id}`, label: group.shortLabel })),
+    { href: "#standard", label: copy("pricing.navTerms") },
+    { href: "#faq", label: copy("pricing.navFaq") },
+  ];
 
   return (
     <div className="pricing-print print-invert">
@@ -90,8 +99,9 @@ export default async function PricingPage() {
         eyebrow={copy("pricing.heroEyebrow")}
         title={copy("pricing.heroTitle")}
         intro={copy("pricing.heroIntro")}
+        animatedHeading
       >
-        <div className="animate-fade-up mt-8 flex flex-wrap items-center gap-3.5 print:hidden" style={{ animationDelay: "120ms" }}>
+        <div className="mt-8 flex flex-wrap items-center gap-3.5 print:hidden" data-stagger data-delay="120">
           <ButtonLink href="#estimate" size="lg">
             <Icon name="layers" className="h-5 w-5" /> {copy("pricing.buildEstimateCta")}
           </ButtonLink>
@@ -100,7 +110,7 @@ export default async function PricingPage() {
           </ButtonLink>
           <PrintButton label={copy("pricing.printCta")} />
         </div>
-        <div className="animate-fade-up mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-mist-300" style={{ animationDelay: "240ms" }}>
+        <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-mist-300" data-stagger data-delay="240">
           <span className="inline-flex items-center gap-2">
             <Icon name="check-circle" className="h-4 w-4 text-electric-300" />
             {allPricesBadge}
@@ -119,12 +129,19 @@ export default async function PricingPage() {
 
       <Container className="relative z-10 -mt-6 sm:-mt-8">
         <PricingMotiveStrip items={motiveItems} />
+        <PricingStatsBar
+          className="mt-4"
+          services={config.services.length}
+          packages={allPricingPlansFrom(config).length}
+          groups={config.groups.length}
+          revisions={config.standard.includedRevisionRounds}
+        />
       </Container>
 
       {/* At-a-glance price directory */}
       <Section className="border-b border-mist-200 bg-white py-14 sm:py-16">
         <Container>
-          <div data-reveal>
+          <div data-reveal="slide-left">
             <SectionHeading
               eyebrow={copy("pricing.glanceEyebrow")}
               title={copy("pricing.glanceTitle")}
@@ -162,17 +179,7 @@ export default async function PricingPage() {
       {/* Sticky section navigation */}
       <div className="sticky top-[68px] z-30 border-b border-mist-200 bg-white/95 backdrop-blur print:hidden">
         <Container>
-          <nav aria-label="Pricing sections" data-reveal className="flex gap-2 overflow-x-auto py-3 text-sm">
-            <a href="#estimate" className="shrink-0 rounded-lg px-3 py-1.5 font-semibold text-electric-700 hover:bg-electric-50">{copy("pricing.navQuickEstimate")}</a>
-            <a href="#packages" className="shrink-0 rounded-lg px-3 py-1.5 font-medium text-navy-800 hover:bg-mist-100">{copy("pricing.navAllPackages")}</a>
-            {config.groups.map((group) => (
-              <a key={group.id} href={`#${group.id}`} className="shrink-0 rounded-lg px-3 py-1.5 font-medium text-navy-800 hover:bg-mist-100">
-                {group.shortLabel}
-              </a>
-            ))}
-            <a href="#standard" className="shrink-0 rounded-lg px-3 py-1.5 font-medium text-navy-800 hover:bg-mist-100">{copy("pricing.navTerms")}</a>
-            <a href="#faq" className="shrink-0 rounded-lg px-3 py-1.5 font-medium text-navy-800 hover:bg-mist-100">{copy("pricing.navFaq")}</a>
-          </nav>
+          <SectionNav items={sectionNavItems} className="py-3" />
         </Container>
       </div>
 
@@ -195,7 +202,7 @@ export default async function PricingPage() {
       {/* Full rate card */}
       <Section id="packages" className="scroll-mt-36 py-16 sm:py-20">
         <Container>
-          <div data-reveal>
+          <div data-reveal="zoom">
             <SectionHeading
               eyebrow={copy("pricing.packagesEyebrow")}
               title={copy("pricing.packagesTitle")}
@@ -232,7 +239,7 @@ export default async function PricingPage() {
       {/* Pricing standard and commercial terms */}
       <Section id="standard" dark className="scroll-mt-36">
         <Container>
-          <div data-reveal>
+          <div data-reveal="slide-right">
             <SectionHeading
               dark
               eyebrow={copy("pricing.standardEyebrow")}
@@ -280,7 +287,7 @@ export default async function PricingPage() {
       {/* Simple process */}
       <Section className="bg-white py-16 sm:py-20">
         <Container>
-          <div data-reveal>
+          <div data-reveal="flip">
             <SectionHeading
               eyebrow={copy("pricing.processEyebrow")}
               title={copy("pricing.processTitle")}
@@ -302,7 +309,7 @@ export default async function PricingPage() {
       {/* FAQ */}
       <Section id="faq" className="scroll-mt-36 bg-mist-50 py-16 sm:py-20">
         <Container className="max-w-4xl">
-          <div data-reveal>
+          <div data-reveal="slide-left">
             <SectionHeading
               eyebrow={copy("pricing.faqEyebrow")}
               title={copy("pricing.faqTitle")}
@@ -327,7 +334,7 @@ export default async function PricingPage() {
 
       <Section className="py-16 print:hidden sm:py-20">
         <Container>
-          <div data-reveal>
+          <div data-reveal="zoom">
             <CTABand
               headline={copy("pricing.ctaHeadline")}
               sub={copy("pricing.ctaSub")}

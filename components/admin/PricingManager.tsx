@@ -579,7 +579,7 @@ export function PricingManager({
 
   function renderGeneral() {
     return (
-      <div data-reveal className="grid gap-5 lg:grid-cols-2">
+      <div data-reveal="slide-left" className="grid gap-5 lg:grid-cols-2">
         <EditorCard title="Currency & display" description="These values appear on the public pricing page and in structured data.">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Currency code" hint="Use GHS for Ghana cedis.">
@@ -839,7 +839,7 @@ export function PricingManager({
 
   function renderPrices() {
     return (
-      <div data-reveal className="space-y-5">
+      <div data-reveal="zoom" className="space-y-5">
         <datalist id="pricing-units">
           {PRICING_UNIT_OPTIONS.map((unit) => <option key={unit} value={unit} />)}
         </datalist>
@@ -882,7 +882,7 @@ export function PricingManager({
       (config.page[key] ?? "").toLowerCase().includes(query);
 
     return (
-      <div data-reveal className="space-y-5">
+      <div data-reveal="slide-right" className="space-y-5">
         <EditorCard title="All page copy" description={`${ALL_PAGE_COPY_KEYS.length} editable strings across the pricing page and its downstream links.`}>
           <Field label="Search copy" hint="Filter by key, label or current text.">
             <Input value={copySearch} onChange={(e) => setCopySearch(e.target.value)} placeholder="e.g. hero, estimate, SEO" />
@@ -929,7 +929,7 @@ export function PricingManager({
 
   function renderPolicies() {
     return (
-      <div data-reveal className="space-y-5">
+      <div data-reveal="flip" className="space-y-5">
         <EditorCard
           title="Pricing groups"
           description="Group IDs are used in page anchors. Changing an ID updates its services automatically."
@@ -1043,7 +1043,7 @@ export function PricingManager({
 
   function renderAdvanced() {
     return (
-      <div data-reveal className="space-y-5">
+      <div data-reveal="zoom" className="space-y-5">
         <EditorCard
           title="Configuration JSON"
           description="Export the full configuration, import a saved JSON file, or edit every field at once. Changes here are applied to the editor before saving."
@@ -1051,7 +1051,7 @@ export function PricingManager({
             <>
               <Button type="button" variant="outline" size="sm" onClick={downloadJson}><Icon name="download" className="h-4 w-4" /> Download JSON</Button>
               <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><Icon name="plus" className="h-4 w-4" /> Import JSON</Button>
-              <Button type="button" variant="ghost" size="sm" onClick={() => repairCurrent()}><Icon name="sparkles" className="h-4 w-4" /> Repair IDs</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => repairCurrent()} data-magnetic><Icon name="sparkles" className="h-4 w-4" /> Repair IDs</Button>
             </>
           }
         >
@@ -1106,7 +1106,7 @@ export function PricingManager({
       ) : null}
 
       <div data-reveal className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-mist-200 bg-white p-3 shadow-card">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5" data-stagger data-delay="80">
           {TABS.map((item) => (
             <button
               key={item.id}
@@ -1122,7 +1122,7 @@ export function PricingManager({
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="ghost" size="sm" onClick={resetDefaults} disabled={busy || !isCustom}>
+          <Button type="button" variant="ghost" size="sm" onClick={resetDefaults} disabled={busy || !isCustom} data-magnetic>
             <Icon name="refresh" className="h-4 w-4" /> Reset defaults
           </Button>
         </div>
@@ -1132,7 +1132,7 @@ export function PricingManager({
       <NoticeBanner message={notice} />
 
       {issues.length > 0 ? (
-        <Card className="pricing-issue-banner border-red-200 bg-red-50 p-4">
+        <Card className="pricing-issue-banner border-red-200 bg-red-50 p-4" data-reveal="zoom">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-start gap-2.5">
               <Icon name="alert-triangle" className="pricing-issue-icon mt-0.5 h-4 w-4 shrink-0 text-red-600" />
@@ -1142,10 +1142,10 @@ export function PricingManager({
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => repairCurrent()} className="gap-1.5">
+              <Button type="button" variant="outline" size="sm" onClick={() => repairCurrent()} className="gap-1.5" data-magnetic>
                 <Icon name="sparkles" className="h-3.5 w-3.5" /> Fix automatically
               </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={() => changeTab("advanced")}>Open JSON</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => changeTab("advanced")} data-magnetic>Open JSON</Button>
             </div>
           </div>
           <ul className="mt-3 max-h-48 space-y-1 overflow-auto text-xs text-red-700">
@@ -1167,8 +1167,8 @@ export function PricingManager({
           {dirty ? "You have unsaved changes." : "All changes are saved."} Pricing is shown in {config.currencyLabel} ({config.currency}, {config.symbol}).
         </p>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => changeTab("advanced")}><Icon name="code" className="h-4 w-4" /> JSON</Button>
-          <Button type="button" size="sm" onClick={save} disabled={busy} className="btn-shine pricing-save-glow"><Icon name="check" className="h-4 w-4" /> {busy ? "Saving…" : "Save changes"}</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => changeTab("advanced")} data-magnetic><Icon name="code" className="h-4 w-4" /> JSON</Button>
+          <Button type="button" size="sm" onClick={save} disabled={busy} className="btn-shine pricing-save-glow" data-magnetic><Icon name="check" className="h-4 w-4" /> {busy ? "Saving…" : "Save changes"}</Button>
         </div>
       </div>
     </div>
