@@ -63,7 +63,7 @@ export function AdminShell({
           </button>
           <Link href="/admin" className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/logo-dark.svg" alt="Fresh Solutions" className="h-8 w-auto" width={130} height={32} />
+            <img src="/brand/company-logo.png" alt="Fresh Solutions" className="h-10 w-auto rounded-lg bg-white px-2 py-1" width={581} height={276} />
             <span className="hidden rounded-md bg-electric-600/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-electric-300 ring-1 ring-inset ring-electric-500/30 sm:inline">
               Dashboard
             </span>

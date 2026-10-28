@@ -136,8 +136,7 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
               <Input id="s-footer" value={f.jobCardFooter} onChange={(e) => set("jobCardFooter", e.target.value)} maxLength={300} />
             </div>
             <p className="rounded-xl bg-mist-50 px-4 py-3 text-xs leading-relaxed text-mist-600">
-              Logo: the current logo is the placeholder mark under /public/brand. To use your official logo, replace
-              those files with yours (SVG or PNG) — no other change is needed.
+              Logo: the official Fresh Solutions logo is included in the website and documents. Brand assets are managed in /public/brand.
             </p>
           </>
         ) : null}

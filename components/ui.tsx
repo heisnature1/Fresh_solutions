@@ -349,20 +349,25 @@ export function PageHero({
   title,
   intro,
   children,
+  animatedHeading = false,
 }: {
   eyebrow?: string;
   title: string;
   intro?: string;
   children?: React.ReactNode;
+  animatedHeading?: boolean;
 }) {
   return (
-    <div className="relative overflow-hidden bg-navy-900">
+    <div className="relative overflow-hidden bg-navy-900" data-parallax-root>
       <div className="bg-grid absolute inset-0" aria-hidden />
-      <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-electric-600/25 blur-[110px]" aria-hidden />
-      <div className="absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-electric-400/15 blur-[110px]" aria-hidden />
+      <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-electric-600/25 blur-[110px]" data-parallax="0.08" aria-hidden />
+      <div className="absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-electric-400/15 blur-[110px]" data-parallax="0.12" aria-hidden />
       <Container className="relative py-16 sm:py-24">
         {eyebrow ? <Eyebrow dark>{eyebrow}</Eyebrow> : null}
-        <h1 className="max-w-3xl font-display text-4xl font-bold leading-[1.06] tracking-tight text-white sm:text-5xl">
+        <h1
+          className="max-w-3xl font-display text-4xl font-bold leading-[1.06] tracking-tight text-white sm:text-5xl"
+          data-split={animatedHeading ? "words" : undefined}
+        >
           {title}
         </h1>
         {intro ? <p className="mt-5 max-w-2xl text-base leading-relaxed text-mist-300 sm:text-lg">{intro}</p> : null}

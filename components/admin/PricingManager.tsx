@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge, Button, ButtonLink, Card, Input, Label, Select, Textarea } from "@/components/ui";
+import { Badge, Button, Card, Input, Label, Select, Textarea } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { InfoCard } from "@/components/admin/ui";
 import { apiCall, ErrorBanner, NoticeBanner, useBusy } from "@/components/admin/client-utils";
+import { Tilt } from "@/components/site/Tilt";
+import { PricingStudioHeader } from "@/components/admin/PricingStudioHeader";
 import { classNames } from "@/lib/utils";
 import {
   ALL_PAGE_COPY_KEYS,
@@ -15,7 +17,9 @@ import {
   MULTILINE_COPY_KEYS,
   PAGE_COPY_GROUPS,
   PRICING_UNIT_OPTIONS,
+  repairPricingConfig,
   serviceDisplayName,
+  slugifyPricingId,
   validatePricingConfig,
   type PricingConfig,
   type PricingConfigIssue,
@@ -36,12 +40,7 @@ function clone<T>(value: T): T {
 }
 
 function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 70);
+  return slugifyPricingId(value);
 }
 
 function uniqueId(base: string, existing: Iterable<string>): string {
@@ -91,16 +90,18 @@ function EditorCard({
   className?: string;
 }) {
   return (
-    <Card className={classNames("p-5", className)}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-display text-base font-bold text-navy-900">{title}</h3>
-          {description ? <p className="mt-1 text-xs leading-relaxed text-mist-500">{description}</p> : null}
+    <Tilt intensity={4} className="h-full">
+      <div data-reveal className={classNames("h-full rounded-2xl border border-mist-200 bg-white p-5 shadow-card", className)}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="font-display text-base font-bold text-navy-900">{title}</h3>
+            {description ? <p className="mt-1 text-xs leading-relaxed text-mist-500">{description}</p> : null}
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
         </div>
-        {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+        <div className="mt-5">{children}</div>
       </div>
-      <div className="mt-5">{children}</div>
-    </Card>
+    </Tilt>
   );
 }
 
@@ -127,6 +128,7 @@ export function PricingManager({
   const [config, setConfig] = useState<PricingConfig>(() => clone(initialConfig));
   const [dirty, setDirty] = useState(false);
   const [issues, setIssues] = useState<PricingConfigIssue[]>([]);
+  const [autoRepairs, setAutoRepairs] = useState<string[]>([]);
   const [copySearch, setCopySearch] = useState("");
   const [jsonText, setJsonText] = useState(() => JSON.stringify(initialConfig, null, 2));
   const [jsonEdited, setJsonEdited] = useState(false);
@@ -159,6 +161,7 @@ export function PricingManager({
     });
     setDirty(true);
     setIssues([]);
+    setAutoRepairs([]);
     setError(null);
     setNotice(null);
     setJsonMessage(null);
@@ -448,19 +451,25 @@ export function PricingManager({
       return false;
     }
     const raw = isConfigWrapper(parsed) ? parsed.config : parsed;
-    const result = validatePricingConfig(raw);
+    const repaired = repairPricingConfig(raw);
+    const result = validatePricingConfig(repaired.config);
     if (!result.ok) {
       setIssues(result.issues);
       setJsonMessage("The JSON is valid, but the pricing configuration is not. Fix the issues below.");
       return false;
     }
     setConfig(result.config);
+    setAutoRepairs(repaired.repairs);
     setDirty(true);
     setIssues([]);
     setError(null);
     setJsonText(JSON.stringify(result.config, null, 2));
     setJsonEdited(false);
-    setJsonMessage("JSON applied to the editor. Save to publish.");
+    setJsonMessage(
+      repaired.repairs.length
+        ? `JSON applied and ${repaired.repairs.length} ID/reference issue${repaired.repairs.length === 1 ? "" : "s"} repaired. Save to publish.`
+        : "JSON applied to the editor. Save to publish.",
+    );
     return true;
   }
 
@@ -493,8 +502,36 @@ export function PricingManager({
   // Save / reset
   // -------------------------------------------------------------------------
 
+  function repairCurrent(source: PricingConfig = config) {
+    const repaired = repairPricingConfig(source);
+    const validation = validatePricingConfig(repaired.config);
+    setConfig(repaired.config);
+    setDirty(true);
+    setIssues(validation.ok ? [] : validation.issues);
+    setAutoRepairs(repaired.repairs);
+    setError(null);
+    setNotice(
+      repaired.repairs.length
+        ? `Repaired ${repaired.repairs.length} ID/reference issue${repaired.repairs.length === 1 ? "" : "s"}. Review, then save.`
+        : "No automatic ID fixes were needed.",
+    );
+    setJsonText(JSON.stringify(repaired.config, null, 2));
+    setJsonEdited(false);
+    setJsonMessage(
+      repaired.repairs.length
+        ? `Configuration repaired (${repaired.repairs.length} issue${repaired.repairs.length === 1 ? "" : "s"}). Review before saving.`
+        : "Configuration checked. No ID repairs were needed.",
+    );
+    return repaired;
+  }
+
   async function save() {
-    const result = validatePricingConfig(config);
+    const repaired = repairPricingConfig(config);
+    if (repaired.repairs.length > 0) {
+      setConfig(repaired.config);
+      setAutoRepairs(repaired.repairs);
+    }
+    const result = validatePricingConfig(repaired.config);
     if (!result.ok) {
       setIssues(result.issues);
       setError(`Please fix ${result.issues.length} validation issue${result.issues.length === 1 ? "" : "s"} before saving.`);
@@ -503,9 +540,13 @@ export function PricingManager({
     }
     setConfig(result.config);
     const ok = await run(() => apiCall("/api/admin/pricing", "POST", { config: result.config }), {
-      notice: "Pricing saved. The public site now uses these settings.",
+      notice: repaired.repairs.length
+        ? `Pricing saved. ${repaired.repairs.length} ID/reference issue${repaired.repairs.length === 1 ? "" : "s"} repaired automatically.`
+        : "Pricing saved. The public site now uses these settings.",
       onSuccess: () => {
         setDirty(false);
+        setIssues([]);
+        setAutoRepairs([]);
         setJsonText(JSON.stringify(result.config, null, 2));
         setJsonEdited(false);
         router.refresh();
@@ -523,6 +564,7 @@ export function PricingManager({
         setConfig(fallback);
         setDirty(false);
         setIssues([]);
+        setAutoRepairs([]);
         setJsonText(JSON.stringify(fallback, null, 2));
         setJsonEdited(false);
         router.refresh();
@@ -537,7 +579,7 @@ export function PricingManager({
 
   function renderGeneral() {
     return (
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div data-reveal="slide-left" className="grid gap-5 lg:grid-cols-2">
         <EditorCard title="Currency & display" description="These values appear on the public pricing page and in structured data.">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Currency code" hint="Use GHS for Ghana cedis.">
@@ -581,21 +623,25 @@ export function PricingManager({
           </div>
         </EditorCard>
 
-        <InfoCard title="Quick stats" className="lg:col-span-2">
-          <div className="grid gap-3 sm:grid-cols-4">
-            {[
-              { label: "Groups", value: config.groups.length },
-              { label: "Services", value: config.services.length },
-              { label: "Packages", value: config.services.reduce((total, entry) => total + entry.plans.length, 0) },
-              { label: "Extras", value: config.services.reduce((total, entry) => total + entry.addOns.length, 0) },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-xl bg-mist-50 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-mist-500">{stat.label}</p>
-                <p className="mt-1 font-display text-2xl font-bold text-navy-900">{stat.value}</p>
+        <Tilt intensity={4} className="lg:col-span-2">
+          <div data-reveal className="h-full">
+            <InfoCard title="Quick stats" className="h-full">
+              <div className="grid gap-3 sm:grid-cols-4">
+                {[
+                  { label: "Groups", value: config.groups.length },
+                  { label: "Services", value: config.services.length },
+                  { label: "Packages", value: config.services.reduce((total, entry) => total + entry.plans.length, 0) },
+                  { label: "Extras", value: config.services.reduce((total, entry) => total + entry.addOns.length, 0) },
+                ].map((stat) => (
+                  <div key={stat.label} className="rounded-xl bg-mist-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-mist-500">{stat.label}</p>
+                    <p className="mt-1 font-display text-2xl font-bold text-navy-900">{stat.value}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+            </InfoCard>
           </div>
-        </InfoCard>
+        </Tilt>
       </div>
     );
   }
@@ -603,56 +649,67 @@ export function PricingManager({
   function renderPlanEditor(serviceIndex: number, planIndex: number) {
     const plan = config.services[serviceIndex].plans[planIndex];
     return (
-      <Card key={planIndex} className="border border-mist-200 bg-white p-4 shadow-none">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-electric-600">Package {planIndex + 1}</p>
-            <h5 className="mt-1 font-display text-base font-bold text-navy-900">{plan.name || "Untitled package"}</h5>
+      <Tilt key={planIndex} intensity={3} className="h-full">
+        <div data-reveal className="h-full">
+          <Card className="border border-mist-200 bg-white p-4 shadow-none">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-electric-600">Package {planIndex + 1}</p>
+              <h5 className="mt-1 font-display text-base font-bold text-navy-900">{plan.name || "Untitled package"}</h5>
+            </div>
+            <RemoveButton label="Remove package" onClick={() => removePlan(serviceIndex, planIndex)} disabled={config.services[serviceIndex].plans.length <= 1} />
           </div>
-          <RemoveButton label="Remove package" onClick={() => removePlan(serviceIndex, planIndex)} disabled={config.services[serviceIndex].plans.length <= 1} />
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <Field label="Package ID" hint="Used in enquiry links; lowercase letters, numbers and hyphens. Invalid characters are fixed on blur.">
+              <Input
+                value={plan.id}
+                onChange={(e) => patchPlan(serviceIndex, planIndex, { id: e.target.value })}
+                onBlur={(e) => {
+                  const clean = slugifyPricingId(e.target.value) || plan.id;
+                  if (clean !== e.target.value) patchPlan(serviceIndex, planIndex, { id: clean });
+                }}
+              />
+            </Field>
+            <Field label="Name">
+              <Input value={plan.name} onChange={(e) => patchPlan(serviceIndex, planIndex, { name: e.target.value })} />
+            </Field>
+            <Field label="Price" hint={`Whole ${config.currency}; no decimals.`}>
+              <Input type="number" min={0} value={plan.price} onChange={(e) => patchPlan(serviceIndex, planIndex, { price: Number(e.target.value) })} />
+            </Field>
+            <Field label="Unit">
+              <Input list="pricing-units" value={plan.unit} onChange={(e) => patchPlan(serviceIndex, planIndex, { unit: e.target.value })} />
+            </Field>
+            <Field label="Price kind">
+              <Select value={plan.kind} onChange={(e) => patchPlan(serviceIndex, planIndex, { kind: e.target.value as "fixed" | "from" })}>
+                <option value="fixed">Fixed price</option>
+                <option value="from">Starting price (from)</option>
+              </Select>
+            </Field>
+            <Field label="Duration">
+              <Input value={plan.duration} onChange={(e) => patchPlan(serviceIndex, planIndex, { duration: e.target.value })} />
+            </Field>
+            <Field label="Best for">
+              <Input value={plan.bestFor} onChange={(e) => patchPlan(serviceIndex, planIndex, { bestFor: e.target.value })} />
+            </Field>
+            <label className="flex items-center gap-2 self-end pb-2 text-sm font-semibold text-navy-900">
+              <input
+                type="checkbox"
+                checked={Boolean(plan.featured)}
+                onChange={(e) => patchPlan(serviceIndex, planIndex, { featured: e.target.checked })}
+                className="h-4 w-4 rounded border-mist-300 text-electric-600 focus:ring-electric-500"
+              />
+              Mark as popular
+            </label>
+            <Field label="Summary" hint="Shown on the pricing card.">
+              <Textarea rows={3} value={plan.summary} onChange={(e) => patchPlan(serviceIndex, planIndex, { summary: e.target.value })} />
+            </Field>
+            <Field label="Inclusions" hint="One inclusion per line.">
+              <Textarea rows={5} value={plan.includes.join("\n")} onChange={(e) => patchPlan(serviceIndex, planIndex, { includes: e.target.value.split("\n") })} />
+          </Field>
+            </div>
+          </Card>
         </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Package ID" hint="Used in enquiry links; lowercase letters, numbers and hyphens.">
-            <Input value={plan.id} onChange={(e) => patchPlan(serviceIndex, planIndex, { id: e.target.value })} />
-          </Field>
-          <Field label="Name">
-            <Input value={plan.name} onChange={(e) => patchPlan(serviceIndex, planIndex, { name: e.target.value })} />
-          </Field>
-          <Field label="Price" hint={`Whole ${config.currency}; no decimals.`}>
-            <Input type="number" min={0} value={plan.price} onChange={(e) => patchPlan(serviceIndex, planIndex, { price: Number(e.target.value) })} />
-          </Field>
-          <Field label="Unit">
-            <Input list="pricing-units" value={plan.unit} onChange={(e) => patchPlan(serviceIndex, planIndex, { unit: e.target.value })} />
-          </Field>
-          <Field label="Price kind">
-            <Select value={plan.kind} onChange={(e) => patchPlan(serviceIndex, planIndex, { kind: e.target.value as "fixed" | "from" })}>
-              <option value="fixed">Fixed price</option>
-              <option value="from">Starting price (from)</option>
-            </Select>
-          </Field>
-          <Field label="Duration">
-            <Input value={plan.duration} onChange={(e) => patchPlan(serviceIndex, planIndex, { duration: e.target.value })} />
-          </Field>
-          <Field label="Best for">
-            <Input value={plan.bestFor} onChange={(e) => patchPlan(serviceIndex, planIndex, { bestFor: e.target.value })} />
-          </Field>
-          <label className="flex items-center gap-2 self-end pb-2 text-sm font-semibold text-navy-900">
-            <input
-              type="checkbox"
-              checked={Boolean(plan.featured)}
-              onChange={(e) => patchPlan(serviceIndex, planIndex, { featured: e.target.checked })}
-              className="h-4 w-4 rounded border-mist-300 text-electric-600 focus:ring-electric-500"
-            />
-            Mark as popular
-          </label>
-          <Field label="Summary" hint="Shown on the pricing card.">
-            <Textarea rows={3} value={plan.summary} onChange={(e) => patchPlan(serviceIndex, planIndex, { summary: e.target.value })} />
-          </Field>
-          <Field label="Inclusions" hint="One inclusion per line.">
-            <Textarea rows={5} value={plan.includes.join("\n")} onChange={(e) => patchPlan(serviceIndex, planIndex, { includes: e.target.value.split("\n") })} />
-          </Field>
-        </div>
-      </Card>
+      </Tilt>
     );
   }
 
@@ -682,7 +739,7 @@ export function PricingManager({
     const group = config.groups.find((item) => item.id === entry.groupId);
     const startingPlanId = entry.startingPlanId || entry.plans[0]?.id || "";
     return (
-      <details key={serviceIndex} open={serviceIndex === 0} className="group rounded-2xl border border-mist-200 bg-white p-4 shadow-card sm:p-5">
+      <details key={serviceIndex} open={serviceIndex === 0} data-reveal className="group rounded-2xl border border-mist-200 bg-white p-4 shadow-card sm:p-5">
         <summary className="flex cursor-pointer list-none flex-wrap items-start justify-between gap-3 [&::-webkit-details-marker]:hidden">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-electric-600">{group?.label ?? entry.groupId}</p>
@@ -699,8 +756,15 @@ export function PricingManager({
 
         <div className="mt-5 space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Field label="Service slug" hint="Used in enquiry URLs. Changing it updates its packages too.">
-              <Input value={entry.serviceSlug} onChange={(e) => setServiceSlug(serviceIndex, e.target.value)} />
+            <Field label="Service slug" hint="Used in enquiry URLs. Changing it updates its packages too. Invalid characters are fixed on blur.">
+              <Input
+                value={entry.serviceSlug}
+                onChange={(e) => setServiceSlug(serviceIndex, e.target.value)}
+                onBlur={(e) => {
+                  const clean = slugifyPricingId(e.target.value) || entry.serviceSlug;
+                  if (clean !== e.target.value) setServiceSlug(serviceIndex, clean);
+                }}
+              />
             </Field>
             <Field label="Display name" hint="Leave blank to use the code service name.">
               <Input value={entry.name ?? ""} onChange={(e) => patchService(serviceIndex, { name: e.target.value })} />
@@ -775,7 +839,7 @@ export function PricingManager({
 
   function renderPrices() {
     return (
-      <div className="space-y-5">
+      <div data-reveal="zoom" className="space-y-5">
         <datalist id="pricing-units">
           {PRICING_UNIT_OPTIONS.map((unit) => <option key={unit} value={unit} />)}
         </datalist>
@@ -818,7 +882,7 @@ export function PricingManager({
       (config.page[key] ?? "").toLowerCase().includes(query);
 
     return (
-      <div className="space-y-5">
+      <div data-reveal="slide-right" className="space-y-5">
         <EditorCard title="All page copy" description={`${ALL_PAGE_COPY_KEYS.length} editable strings across the pricing page and its downstream links.`}>
           <Field label="Search copy" hint="Filter by key, label or current text.">
             <Input value={copySearch} onChange={(e) => setCopySearch(e.target.value)} placeholder="e.g. hero, estimate, SEO" />
@@ -865,7 +929,7 @@ export function PricingManager({
 
   function renderPolicies() {
     return (
-      <div className="space-y-5">
+      <div data-reveal="flip" className="space-y-5">
         <EditorCard
           title="Pricing groups"
           description="Group IDs are used in page anchors. Changing an ID updates its services automatically."
@@ -875,7 +939,14 @@ export function PricingManager({
             {config.groups.map((group, index) => (
               <div key={index} className="grid gap-3 rounded-xl border border-mist-200 bg-mist-50 p-4 sm:grid-cols-[1fr_1fr_1.5fr_auto] sm:items-end">
                 <Field label="Group ID">
-                  <Input value={group.id} onChange={(e) => setGroupId(index, e.target.value)} />
+                  <Input
+                    value={group.id}
+                    onChange={(e) => setGroupId(index, e.target.value)}
+                    onBlur={(e) => {
+                      const clean = slugifyPricingId(e.target.value) || group.id;
+                      if (clean !== e.target.value) setGroupId(index, clean);
+                    }}
+                  />
                 </Field>
                 <Field label="Short label">
                   <Input value={group.shortLabel} onChange={(e) => patchGroup(index, { shortLabel: e.target.value })} />
@@ -972,7 +1043,7 @@ export function PricingManager({
 
   function renderAdvanced() {
     return (
-      <div className="space-y-5">
+      <div data-reveal="zoom" className="space-y-5">
         <EditorCard
           title="Configuration JSON"
           description="Export the full configuration, import a saved JSON file, or edit every field at once. Changes here are applied to the editor before saving."
@@ -980,6 +1051,7 @@ export function PricingManager({
             <>
               <Button type="button" variant="outline" size="sm" onClick={downloadJson}><Icon name="download" className="h-4 w-4" /> Download JSON</Button>
               <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}><Icon name="plus" className="h-4 w-4" /> Import JSON</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => repairCurrent()} data-magnetic><Icon name="sparkles" className="h-4 w-4" /> Repair IDs</Button>
             </>
           }
         >
@@ -1007,7 +1079,7 @@ export function PricingManager({
             spellCheck={false}
           />
           <p className="mt-2 text-xs leading-relaxed text-mist-500">
-            The JSON is validated against the same schema as the form editor. Unknown copy keys are ignored, duplicate IDs are rejected, and invalid saved data falls back to the built-in rate card.
+            The JSON is validated against the same schema as the form editor. Unknown copy keys are ignored, invalid package/group IDs and stale starting-package references are repaired automatically, and duplicate IDs are made unique. Other invalid data keeps the built-in fallback rate card.
           </p>
         </EditorCard>
       </div>
@@ -1018,25 +1090,23 @@ export function PricingManager({
 
   return (
     <div className="space-y-5">
-      <InfoCard title="Configuration source">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={isCustom ? "green" : "blue"}>{isCustom ? "Saved in database" : "Built-in defaults"}</Badge>
-          {dirty ? <Badge tone="amber">Unsaved changes</Badge> : <Badge tone="neutral">Saved</Badge>}
-          <span className="text-xs text-mist-500">
-            {config.services.length} services · {planCount} packages · effective {config.standard.effectiveDate}
-          </span>
-          {updatedAt ? (
-            <span className="text-xs text-mist-500">Last saved {new Date(updatedAt).toLocaleString()}</span>
-          ) : null}
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-mist-500">
-          Saving writes to the admin-only <code className="font-mono">site_settings</code> record and refreshes the public pricing pages.
-          If no override exists, the site uses the checked-in fallback rate card in <code className="font-mono">lib/pricing.ts</code>.
-        </p>
-      </InfoCard>
+      <PricingStudioHeader
+        isCustom={isCustom}
+        dirty={dirty}
+        saving={busy}
+        services={config.services.length}
+        plans={planCount}
+        effectiveDate={config.standard.effectiveDate}
+        repairsCount={autoRepairs.length}
+        onSave={save}
+        onRepair={() => repairCurrent()}
+      />
+      {updatedAt ? (
+        <p className="-mt-2 text-right text-[11px] text-mist-500">Last saved {new Date(updatedAt).toLocaleString()}</p>
+      ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-mist-200 bg-white p-3 shadow-card">
-        <div className="flex flex-wrap gap-1.5">
+      <div data-reveal className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-mist-200 bg-white p-3 shadow-card">
+        <div className="flex flex-wrap gap-1.5" data-stagger data-delay="80">
           {TABS.map((item) => (
             <button
               key={item.id}
@@ -1044,7 +1114,7 @@ export function PricingManager({
               onClick={() => changeTab(item.id)}
               className={classNames(
                 "inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
-                tab === item.id ? "bg-electric-600 text-white" : "text-mist-600 hover:bg-mist-100 hover:text-navy-900",
+                tab === item.id ? "pricing-tab-active bg-electric-600 text-white shadow-[0_8px_20px_-10px_rgb(37_99_235/0.8)]" : "text-mist-600 hover:bg-mist-100 hover:text-navy-900",
               )}
             >
               <Icon name={item.icon} className="h-4 w-4" /> {item.label}
@@ -1052,14 +1122,8 @@ export function PricingManager({
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/pricing" external variant="outline" size="sm">
-            <Icon name="external" className="h-4 w-4" /> View public page
-          </ButtonLink>
-          <Button type="button" variant="ghost" size="sm" onClick={resetDefaults} disabled={busy || !isCustom}>
+          <Button type="button" variant="ghost" size="sm" onClick={resetDefaults} disabled={busy || !isCustom} data-magnetic>
             <Icon name="refresh" className="h-4 w-4" /> Reset defaults
-          </Button>
-          <Button type="button" size="sm" onClick={save} disabled={busy}>
-            <Icon name="check" className="h-4 w-4" /> {busy ? "Saving…" : "Save changes"}
           </Button>
         </div>
       </div>
@@ -1068,13 +1132,21 @@ export function PricingManager({
       <NoticeBanner message={notice} />
 
       {issues.length > 0 ? (
-        <Card className="border-red-200 bg-red-50 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h3 className="font-display text-sm font-bold text-red-800">{issues.length} validation issue{issues.length === 1 ? "" : "s"}</h3>
-              <p className="mt-1 text-xs text-red-700">Fix these before saving. The first few are listed below.</p>
+        <Card className="pricing-issue-banner border-red-200 bg-red-50 p-4" data-reveal="zoom">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <Icon name="alert-triangle" className="pricing-issue-icon mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+              <div>
+                <h3 className="font-display text-sm font-bold text-red-800">{issues.length} validation issue{issues.length === 1 ? "" : "s"}</h3>
+                <p className="mt-1 text-xs text-red-700">Most ID and starting-package problems can be fixed automatically. The rest are listed below.</p>
+              </div>
             </div>
-            <Button type="button" variant="ghost" size="sm" onClick={() => changeTab("advanced")}>Open JSON</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => repairCurrent()} className="gap-1.5" data-magnetic>
+                <Icon name="sparkles" className="h-3.5 w-3.5" /> Fix automatically
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => changeTab("advanced")} data-magnetic>Open JSON</Button>
+            </div>
           </div>
           <ul className="mt-3 max-h-48 space-y-1 overflow-auto text-xs text-red-700">
             {issues.slice(0, 12).map((issue, index) => (
@@ -1090,13 +1162,13 @@ export function PricingManager({
       {tab === "policies" ? renderPolicies() : null}
       {tab === "advanced" ? renderAdvanced() : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-mist-200 bg-white p-4 shadow-card">
+      <div data-reveal className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-mist-200 bg-white p-4 shadow-card">
         <p className="text-xs text-mist-500">
           {dirty ? "You have unsaved changes." : "All changes are saved."} Pricing is shown in {config.currencyLabel} ({config.currency}, {config.symbol}).
         </p>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => changeTab("advanced")}><Icon name="code" className="h-4 w-4" /> JSON</Button>
-          <Button type="button" size="sm" onClick={save} disabled={busy}><Icon name="check" className="h-4 w-4" /> {busy ? "Saving…" : "Save changes"}</Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => changeTab("advanced")} data-magnetic><Icon name="code" className="h-4 w-4" /> JSON</Button>
+          <Button type="button" size="sm" onClick={save} disabled={busy} className="btn-shine pricing-save-glow" data-magnetic><Icon name="check" className="h-4 w-4" /> {busy ? "Saving…" : "Save changes"}</Button>
         </div>
       </div>
     </div>

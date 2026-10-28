@@ -42,7 +42,7 @@ export class PdfBuilder {
     const c = opts.company;
     b.companyLines = [c?.email, c?.phone, c?.location].filter(Boolean) as string[];
 
-    // Optional brand mark for the header (PNG placeholder is replaceable).
+    // Optional company brand mark for the header.
     try {
       const p = path.join(process.cwd(), "public", "brand", "logo-mark.png");
       if (fs.existsSync(p)) b.logoPng = new Uint8Array(fs.readFileSync(p));

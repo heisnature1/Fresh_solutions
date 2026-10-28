@@ -304,6 +304,32 @@ const money = z.coerce.number().int("Use whole cedis.").min(0, "Price cannot be 
 const unit = z.string().trim().min(1).max(40);
 const kind: z.ZodType<PriceKind> = z.enum(["fixed", "from"]);
 
+const PRICING_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Convert free text into a URL/package ID that satisfies the ID rules. */
+export function slugifyPricingId(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 70)
+    .replace(/-+$/g, "");
+}
+
+function uniquePricingId(base: string, taken: Set<string>): string {
+  const root = slugifyPricingId(base) || "package";
+  if (!taken.has(root)) {
+    taken.add(root);
+    return root;
+  }
+  let suffix = 2;
+  while (taken.has(`${root}-${suffix}`)) suffix += 1;
+  const id = `${root}-${suffix}`;
+  taken.add(id);
+  return id;
+}
+
 const standardSchema = z.object({
   effectiveDate: isoDate,
   quoteValidityDays: z.coerce.number().int().min(1).max(365),
@@ -507,9 +533,76 @@ function configFromParsed(data: PricingConfigInput): PricingConfig {
   };
 }
 
+export interface PricingConfigRepairResult {
+  config: PricingConfig;
+  repairs: string[];
+}
+
+/**
+ * Repair common ID problems without discarding the rest of an admin's edits.
+ * Invalid characters, duplicate IDs and stale startingPlanId/groupId references
+ * are all normalised so a draft can be saved instead of rejected outright.
+ */
+export function repairPricingConfig(value: unknown): PricingConfigRepairResult {
+  const candidate = clone(buildPricingCandidate(value)) as PricingConfig;
+  const repairs: string[] = [];
+
+  const groupTaken = new Set<string>();
+  const groupMap = new Map<string, string>();
+  for (const group of candidate.groups) {
+    const oldId = group.id;
+    const base = slugifyPricingId(oldId) || slugifyPricingId(group.label) || "group";
+    const newId = uniquePricingId(base, groupTaken);
+    group.id = newId;
+    groupMap.set(oldId, newId);
+    if (newId !== oldId) repairs.push(`Normalised group ID "${oldId}" to "${newId}".`);
+  }
+  const validGroupIds = candidate.groups.map((group) => group.id);
+
+  const planTaken = new Set<string>();
+  for (const service of candidate.services) {
+    const oldToNew = new Map<string, string>();
+    const serviceSlug = slugifyPricingId(service.serviceSlug) || "service";
+    for (const [index, plan] of service.plans.entries()) {
+      const oldId = plan.id;
+      const base = slugifyPricingId(oldId) || `${serviceSlug}-package-${index + 1}`;
+      const newId = uniquePricingId(base, planTaken);
+      plan.id = newId;
+      plan.serviceSlug = service.serviceSlug;
+      oldToNew.set(oldId, newId);
+      if (newId !== oldId) repairs.push(`Normalised package ID "${oldId}" to "${newId}".`);
+    }
+
+    const validPlanIds = service.plans.map((plan) => plan.id);
+    const previousStart = service.startingPlanId ?? "";
+    const mappedStart = oldToNew.get(previousStart) ?? previousStart;
+    if (!validPlanIds.includes(mappedStart)) {
+      const fallback = validPlanIds[0] ?? "";
+      service.startingPlanId = fallback;
+      repairs.push(`Set starting package for ${service.serviceSlug || "service"} to ${fallback || "none"}.`);
+    } else if (mappedStart !== previousStart) {
+      service.startingPlanId = mappedStart;
+      repairs.push(`Updated starting package for ${service.serviceSlug || "service"} to ${mappedStart}.`);
+    }
+
+    const mappedGroup = groupMap.get(service.groupId) ?? service.groupId;
+    if (!validGroupIds.includes(mappedGroup)) {
+      const fallback = validGroupIds[0] ?? "";
+      service.groupId = fallback;
+      repairs.push(`Assigned ${service.serviceSlug || "service"} to group ${fallback || "none"}.`);
+    } else if (mappedGroup !== service.groupId) {
+      service.groupId = mappedGroup;
+      repairs.push(`Updated group for ${service.serviceSlug || "service"} to ${mappedGroup}.`);
+    }
+  }
+
+  return { config: candidate, repairs };
+}
+
 /** Validate an untrusted value and always return a usable PricingConfig. */
 export function normalizePricingConfig(value: unknown): PricingConfig {
-  const parsed = pricingConfigSchema.safeParse(buildPricingCandidate(value));
+  const repaired = repairPricingConfig(value);
+  const parsed = pricingConfigSchema.safeParse(repaired.config);
   if (!parsed.success) return clone(DEFAULT_PRICING_CONFIG);
   return configFromParsed(parsed.data);
 }

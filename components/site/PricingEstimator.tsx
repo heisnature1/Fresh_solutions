@@ -61,7 +61,7 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-      <div className="rounded-2xl border border-mist-200 bg-white p-6 shadow-card sm:p-8">
+      <div data-tilt={5} className="tilt-shell rounded-2xl border border-mist-200 bg-white p-6 shadow-card sm:p-8">
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-electric-600/10 text-electric-600">
             <Icon name="layers" className="h-5 w-5" />
@@ -72,7 +72,7 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
           </div>
         </div>
 
-        <div className="mt-7 grid gap-4 sm:grid-cols-2">
+        <div className="mt-7 grid gap-4 sm:grid-cols-2" data-stagger data-delay="120">
           <div>
             <Label htmlFor="estimate-service">{copy("pricing.estimatorServiceLabel")}</Label>
             <Select id="estimate-service" value={serviceSlug} onChange={(e) => changeService(e.target.value)}>
@@ -129,7 +129,7 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
         </div>
 
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <Button type="button" onClick={addPlan} disabled={selectedIds.includes(activePlan.id)}>
+          <Button type="button" onClick={addPlan} disabled={selectedIds.includes(activePlan.id)} data-magnetic>
             <Icon name="plus" className="h-4 w-4" />
             {selectedIds.includes(activePlan.id) ? copy("pricing.estimatorAddedButton") : copy("pricing.estimatorAddButton")}
           </Button>
@@ -141,6 +141,8 @@ export function PricingEstimator({ config }: { config: PricingConfig }) {
 
       <aside
         aria-live="polite"
+        data-reveal
+        data-delay="120ms"
         className="rounded-2xl border border-navy-700 bg-gradient-to-br from-navy-900 to-navy-800 p-6 text-white shadow-card-lg sm:p-8 lg:sticky lg:top-24"
       >
         <div className="flex items-start justify-between gap-4">

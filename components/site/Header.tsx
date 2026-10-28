@@ -89,7 +89,7 @@ export function SiteHeader({ pricingLabel = "Pricing" }: { pricingLabel?: string
       <div className="mx-auto flex h-[68px] w-full max-w-7xl items-center gap-3 px-5 sm:px-8">
         <Link href="/" className="flex shrink-0 items-center" aria-label="Fresh Solutions — home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-dark.svg" alt="Fresh Solutions" className="h-10 w-auto" width={162} height={40} />
+          <img src="/brand/company-logo.png" alt="Fresh Solutions" className="h-11 w-auto rounded-lg bg-white px-2 py-1" width={581} height={276} />
         </Link>
 
         {/* Desktop nav */}

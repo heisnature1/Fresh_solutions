@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from "@/lib/constants";
 import { siteUrl } from "@/lib/settings";
+import { MotionProvider } from "@/components/site/MotionProvider";
 
 const inter = localFont({
   src: "../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2",
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to main content
         </a>
         {children}
+        <MotionProvider />
       </body>
     </html>
   );

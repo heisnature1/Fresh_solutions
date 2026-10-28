@@ -27,7 +27,7 @@ export async function SiteFooter({ pricingLabel = "Pricing in GHS" }: { pricingL
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/logo-dark.svg" alt="Fresh Solutions" className="h-11 w-auto" width={178} height={44} />
+            <img src="/brand/company-logo.png" alt="Fresh Solutions" className="h-14 w-auto rounded-lg bg-white px-2 py-1" width={581} height={276} />
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-mist-400">{settings.companyDescription}</p>
             {socials.length > 0 ? (
               <div className="mt-6 flex flex-wrap gap-2.5">
