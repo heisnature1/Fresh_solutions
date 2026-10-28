@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function AdminLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; passwordChanged?: string }>;
 }) {
   const session = await getCurrentAdmin();
   const params = await searchParams;
@@ -33,6 +33,7 @@ export default async function AdminLoginPage({
           <p className="mt-1.5 text-sm text-mist-400">
             Authorised access only. All sign-in attempts are logged and rate-limited.
           </p>
+          {params.passwordChanged === "1" ? <p role="status" className="mt-5 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">Password changed. Sign in with your new password.</p> : null}
           <div className="mt-6">
             <LoginForm next={params.next} />
           </div>
