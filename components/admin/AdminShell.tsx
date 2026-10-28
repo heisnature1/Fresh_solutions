@@ -19,6 +19,7 @@ const NAV = [
   { href: "/admin/careers", label: "Recruitment", icon: "briefcase" },
   { href: "/admin/testimonials", label: "Testimonials", icon: "star" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },
+  { href: "/admin/account", label: "Account & password", icon: "lock" },
 ];
 
 export function AdminShell({
@@ -81,6 +82,9 @@ export function AdminShell({
             >
               <Icon name="external" className="h-3.5 w-3.5" /> View site
             </a>
+            <Link href="/admin/account" className="inline-flex items-center gap-1.5 rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-mist-300 ring-1 ring-inset ring-white/10 hover:text-white">
+              <Icon name="lock" className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Change password</span><span className="sm:hidden">Account</span>
+            </Link>
             <button
               type="button"
               onClick={logout}

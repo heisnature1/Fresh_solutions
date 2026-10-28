@@ -136,22 +136,22 @@ export function PricingManager({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!dirty) {
+    if (!dirty && !jsonEdited) {
       setConfig(clone(initialConfig));
       setJsonText(JSON.stringify(initialConfig, null, 2));
       setJsonEdited(false);
     }
-  }, [initialConfig, dirty]);
+  }, [initialConfig, dirty, jsonEdited]);
 
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !jsonEdited) return;
     const handler = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [dirty]);
+  }, [dirty, jsonEdited]);
 
   function update(mutator: (draft: PricingConfig) => void) {
     setConfig((prev) => {
@@ -435,8 +435,7 @@ export function PricingManager({
     try {
       const parsed: unknown = JSON.parse(jsonText);
       setJsonText(JSON.stringify(parsed, null, 2));
-      setJsonEdited(false);
-      setJsonMessage("JSON formatted.");
+      setJsonMessage("JSON formatted. Apply it to the editor before publishing.");
     } catch {
       setJsonMessage("This is not valid JSON yet.");
     }
@@ -526,6 +525,12 @@ export function PricingManager({
   }
 
   async function save() {
+    if (jsonEdited) {
+      setTab("advanced");
+      setError("Apply your edited JSON to the editor before saving, or reload the editor JSON to discard it.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     const repaired = repairPricingConfig(config);
     if (repaired.repairs.length > 0) {
       setConfig(repaired.config);
@@ -1090,9 +1095,20 @@ export function PricingManager({
 
   return (
     <div className="space-y-5">
+      <div className="sticky top-16 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-electric-200 bg-white p-3 shadow-card-lg" aria-label="Publish pricing">
+        <div className="text-sm" role="status" aria-live="polite">
+          <p className="font-bold text-navy-900">{dirty || jsonEdited ? "Unpublished pricing changes" : "Pricing is up to date"}</p>
+          <p className="text-xs text-mist-600">{jsonEdited ? "Apply edited JSON before publishing." : dirty ? "Save to make these changes visible on the public site." : "Changes appear publicly after you save."}</p>
+          {error ? <p className="text-xs font-semibold text-red-700" role="alert">{error}</p> : notice ? <p className="text-xs font-semibold text-emerald-700">{notice}</p> : null}
+        </div>
+        <div className="flex items-center gap-2">
+          <a href="/pricing" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-electric-700 underline underline-offset-2">View public pricing</a>
+          <Button type="button" onClick={save} disabled={busy} className="gap-1.5"><Icon name="check" className="h-4 w-4" /> {busy ? "Saving…" : "Save & publish pricing"}</Button>
+        </div>
+      </div>
       <PricingStudioHeader
         isCustom={isCustom}
-        dirty={dirty}
+        dirty={dirty || jsonEdited}
         saving={busy}
         services={config.services.length}
         plans={planCount}

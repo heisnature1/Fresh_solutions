@@ -7,7 +7,7 @@ import { Button, Input, Label } from "@/components/ui";
 
 export function PasswordForm() {
   const router = useRouter();
-  const { busy, error, notice, run, setNotice } = useBusy();
+  const { busy, error, notice, run } = useBusy();
   const [f, setF] = useState({ current: "", next: "", confirm: "" });
 
   async function change() {
@@ -18,9 +18,10 @@ export function PasswordForm() {
           newPassword: f.next,
         }),
       {
-        onSuccess: (data) => {
-          setNotice(typeof data?.message === "string" ? data.message : "Password changed.");
+        onSuccess: () => {
           setF({ current: "", next: "", confirm: "" });
+          router.replace("/admin/login?passwordChanged=1");
+          router.refresh();
         },
       },
     );
@@ -33,7 +34,7 @@ export function PasswordForm() {
       <h2 className="mb-4 font-display text-base font-bold text-navy-900">Change password</h2>
       <div className="space-y-4">
         <div><Label htmlFor="pw-cur" required>Current password</Label><Input id="pw-cur" type="password" autoComplete="current-password" value={f.current} onChange={(e) => setF((p) => ({ ...p, current: e.target.value }))} /></div>
-        <div><Label htmlFor="pw-new" required>New password <span className="font-normal text-mist-500">(min 12 characters)</span></Label><Input id="pw-new" type="password" autoComplete="new-password" value={f.next} onChange={(e) => setF((p) => ({ ...p, next: e.target.value }))} /></div>
+        <div><Label htmlFor="pw-new" required>New password <span className="font-normal text-mist-500">(at least 12 characters, including uppercase, lowercase and a number)</span></Label><Input id="pw-new" type="password" autoComplete="new-password" value={f.next} onChange={(e) => setF((p) => ({ ...p, next: e.target.value }))} /></div>
         <div><Label htmlFor="pw-conf" required>Confirm new password</Label><Input id="pw-conf" type="password" autoComplete="new-password" value={f.confirm} onChange={(e) => setF((p) => ({ ...p, confirm: e.target.value }))} /></div>
         {f.next && f.confirm && f.next !== f.confirm ? <p className="text-sm text-red-600">Passwords do not match.</p> : null}
         <div className="space-y-3 pt-2">
@@ -41,7 +42,7 @@ export function PasswordForm() {
           <NoticeBanner message={notice} />
           <Button onClick={change} disabled={busy || !valid}>{busy ? "Changing…" : "Change password"}</Button>
         </div>
-        <p className="text-xs text-mist-500">Attempts are rate-limited. After changing, existing sessions in other browsers stay valid until signed out — the session list is small (single owner).</p>
+        <p className="text-xs text-mist-500">Attempts are rate-limited. After changing your password, you will need to sign in again. Other browser sessions remain active until signed out.</p>
       </div>
     </div>
   );

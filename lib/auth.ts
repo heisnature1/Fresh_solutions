@@ -162,7 +162,7 @@ export async function changePassword(
     .update(schema.admins)
     .set({ passwordHash: await hashPassword(newPassword), updatedAt: new Date() })
     .where(eq(schema.admins.id, adminId));
-  // Revoke all other sessions for this account.
+  // Sign out the current session after the password change.
   const token = await getSessionToken();
   if (token) await destroySession(token);
   return { ok: true };
