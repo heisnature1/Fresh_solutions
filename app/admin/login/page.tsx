@@ -25,7 +25,7 @@ export default async function AdminLoginPage({
       <div className="relative w-full max-w-md">
         <div className="mb-8 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-dark.svg" alt="Fresh Solutions" className="mx-auto h-12 w-auto" width={194} height={48} />
+          <img src="/brand/company-logo.png" alt="Fresh Solutions" className="mx-auto h-16 w-auto rounded-lg bg-white px-2 py-1" width={581} height={276} />
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.25em] text-mist-500">Business Dashboard</p>
         </div>
         <div className="rounded-3xl border border-white/10 bg-navy-900/80 p-8 shadow-card-lg backdrop-blur">
