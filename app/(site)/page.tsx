@@ -57,18 +57,17 @@ export default async function HomePage() {
   const copy = (key: string) => pricingCopy(pricing, key);
 
   return (
-    <>
+    <div className="home-page">
       <Hero />
 
       {/* Services overview */}
-      <Section id="solutions">
+      <Section id="solutions" className="home-services">
         <Container>
-          <SectionHeading
-            eyebrow="What we do"
-            title="One team across technology, engineering, and repairs"
-            intro="From software and security to hands-on electronics repair, Fresh Solutions brings practical expertise under one roof."
-          />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="home-section-heading" data-reveal="slide-left">
+            <div><p className="home-section-eyebrow">01 / WHAT WE DO</p><h2>Good ideas deserve<br /><em>great execution.</em></h2></div>
+            <p>From software and security to hands-on electronics repair, we bring the right expertise together to solve real problems.</p>
+          </div>
+          <div className="home-service-grid grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {SERVICES.map((s, i) => (
               <Reveal key={s.slug} delay={(i % 4) * 60}>
                 <ServiceCard service={s} pricing={pricing} />
@@ -77,6 +76,17 @@ export default async function HomePage() {
           </div>
         </Container>
       </Section>
+
+      <section className="home-process" aria-label="Our approach">
+        <Container>
+          <div className="home-process-top" data-reveal><p className="home-section-eyebrow">02 / THE FRESH APPROACH</p><h2>From first thought<br /><em>to finished work.</em></h2><p>Big idea or small fix, we keep the process clear and focused on what matters to you.</p></div>
+          <div className="home-process-grid" data-stagger>
+            <div><span>01</span><h3>Tell us the challenge</h3><p>Share what you need, where you are, and what a good outcome looks like.</p></div>
+            <div><span>02</span><h3>Find the right approach</h3><p>We listen, assess the details, and recommend a practical way forward.</p></div>
+            <div><span>03</span><h3>Make it happen</h3><p>We do the work carefully and keep communication clear along the way.</p></div>
+          </div>
+        </Container>
+      </section>
 
       {/* Transparent pricing CTA */}
       <Section className="bg-white py-14 sm:py-16">
@@ -91,7 +101,7 @@ export default async function HomePage() {
       </Section>
 
       {/* Repairs spotlight */}
-      <Section dark className="relative overflow-hidden">
+      <Section dark className="home-repairs relative overflow-hidden">
         <div className="bg-grid absolute inset-0 opacity-60" aria-hidden />
         <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-electric-600/15 blur-[110px]" aria-hidden />
         <Container className="relative">
@@ -271,7 +281,7 @@ export default async function HomePage() {
       ) : null}
 
       {/* Contact */}
-      <Section id="contact" className="bg-gradient-to-b from-mist-50 to-white">
+      <Section id="contact" className="home-contact bg-gradient-to-b from-mist-50 to-white">
         <Container>
           <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr]">
             <div>
@@ -335,6 +345,6 @@ export default async function HomePage() {
           </div>
         </Container>
       </Section>
-    </>
+    </div>
   );
 }
