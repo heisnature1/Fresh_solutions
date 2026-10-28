@@ -21,8 +21,13 @@ Supabase covers both items 1 and 2 in one account: a Postgres database plus S3-c
 ## 2. Create the database (Supabase)
 
 1. Create a Supabase project (save the DB password when prompted).
-2. Vercel/serverless traffic should use the **connection pooler**: Supabase → Connect → **Transaction pooler** — a `postgresql://` string on port `6543`. The **direct** string (port 5432) also works but free-tier direct connections are capped.
-3. **Migrations run automatically**: the app applies `db/migrations` idempotently on first database access, so there is no separate migrate step on Vercel. You can also run them explicitly from your machine with `DATABASE_URL=… npm run db:migrate` (prefer the *direct* string for this one-off DDL job).
+2. In **Connect → Transaction pooler**, copy the full `postgresql://` string on **port `6543`**. This is the string that works reliably from Vercel's serverless functions:
+   - The **direct** host `db.<project-ref>.supabase.co` is **IPv6-only** on the free tier. Vercel's Node runtime cannot resolve it (`getaddrinfo ENOTFOUND`).
+   - The **shared pooler** host `aws-<index>-<region>.pooler.supabase.com` is IPv4 and built for serverless/edge traffic. Copy the exact host from the Connect dialog — the index varies by project.
+   - Through the pooler, the username must include the project reference: `postgres.<project-ref>` for the default role, or `<custom-role>.<project-ref>` for a custom role. A bare role name produces `Tenant or user not found`.
+   - Use **port 6543 (transaction mode)** for Vercel. Session mode (port 5432) has a small 15-client ceiling on the free tier and is easily exhausted by serverless cold starts.
+   - Do **not** append `?sslmode=require` to `DATABASE_URL`. Supabase's pooler presents a certificate chain that Node's `pg` rejects with `SELF_SIGNED_CERT_IN_CHAIN`; the app already sets `ssl: { rejectUnauthorized: false }` for `*.pooler.supabase.com` URLs. Adding `sslmode=require` overrides that setting and re-enables strict verification. TLS is still used.
+3. **Migrations run automatically**: the app applies `db/migrations` idempotently on first database access, so there is no separate migrate step on Vercel. You can also run them explicitly from your machine with `DATABASE_URL=… npm run db:migrate` (the transaction pooler works because the migrator uses a single transaction; a direct or session-pooler string also works).
 4. If the connection string contains `@ # / $ ?` in the password, URL-encode them (`@` → `%40`, …) or reset the DB password to letters+numbers.
 
 > In local development, leave `DATABASE_URL` empty to use the embedded real-Postgres engine (PGlite). Never point local dev at the production database.
@@ -77,7 +82,7 @@ ADMIN_NAME="Your Name" \
 npm run provision:admin
 ```
 
-Then log in at `https://your-site/admin`. To reset a lost password later, re-run the same command with `--reset-password`. Password policy: ≥12 chars, lower+upper, number.
+Then log in at `https://your-site/admin`. To reset a lost password later, re-run the same command with `--reset-password`. Password policy: ≥12 chars, lower+upper, number. The provisioning script imports password helpers from `lib/password.ts`, so it runs directly with `tsx` without pulling in Next.js-only server modules. After signing in with the initial password, change it from the **Admin → Settings → Change password** form.
 
 ## 6. Post-deploy hygiene
 

@@ -44,7 +44,11 @@ async function createDb(): Promise<Database> {
     const pool = new pg.default.Pool({
       connectionString: url,
       ssl,
-      max: 5,
+      // Serverless functions should hold only a small number of short-lived
+      // client connections; Supabase's transaction pooler multiplexes them.
+      max: 3,
+      idleTimeoutMillis: 10_000,
+      connectionTimeoutMillis: 10_000,
     });
     db = drizzle(pool, { schema }) as unknown as Database;
     const { migrate } = await import("drizzle-orm/node-postgres/migrator");

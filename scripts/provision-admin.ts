@@ -8,7 +8,7 @@
  */
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "../lib/db/client";
-import { hashPassword, passwordIssues } from "../lib/auth";
+import { hashPassword, passwordIssues } from "../lib/password";
 
 async function main() {
   const email = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
